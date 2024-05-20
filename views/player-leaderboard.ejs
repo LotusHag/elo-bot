@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Leaderboard</title>
+    <style>
+        body {
+            background-color: #01133D;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-container a {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-container a:hover {
+            background-color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #555;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+        <a href="/players/leaderboard">Player Leaderboard</a>
+        <a href="/teams/leaderboard">Team Leaderboard</a>
+        <a href="/players/input">Submit Player Results</a>
+        <a href="/teams/input">Submit Team Results</a>
+    </div>
+    <h1>Player Leaderboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Elo</th>
+                <th>Winrate</th>
+                <th>Wins</th>
+                <th>Losses</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% players.forEach((player, index) => { %>
+                <tr>
+                    <td>
+                        <% if (player.winStreak >= 3) { %>
+                            <%= '🔥'.repeat(player.winStreak - 2) %>
+                        <% } else { %>
+                            <%= index + 1 %>
+                        <% } %>
+                    </td>
+                    <td><%= player.name %></td>
+                    <td><%= Math.round(player.elo) %></td>
+                    <td><%= (player.wins + player.losses > 0) ? (Math.round((player.wins / (player.wins + player.losses)) * 100) + '%') : '0%' %></td>
+                    <td><%= player.wins %></td>
+                    <td><%= player.losses %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

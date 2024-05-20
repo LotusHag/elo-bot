@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Team Leaderboard</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="nav-container">
+        <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+        <a href="/players/leaderboard">Player Leaderboard</a>
+        <a href="/teams/leaderboard">Team Leaderboard</a>
+        <a href="/players/input">Submit Player Results</a>
+        <a href="/teams/input">Submit Team Results</a>
+    </div>
+    <h1>Team Leaderboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Team</th>
+                <th>Wins</th>
+                <th>Losses</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% teams.forEach((team, index) => { %>
+                <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= team.name %></td>
+                    <td><%= team.wins %></td>
+                    <td><%= team.losses %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</body>
+</html>

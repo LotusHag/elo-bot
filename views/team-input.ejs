@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Team Results</title>
+    <style>
+        body {
+            background-color: #01133D;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .form-container {
+            width: 300px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #333;
+            border-radius: 10px;
+        }
+        .form-container h2 {
+            text-align: center;
+        }
+        .form-container input, .form-container select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .form-container button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <h2>Submit Team Results</h2>
+        <form action="/teams/input" method="POST">
+            <label for="blueTeam">Blue Team</label>
+            <input type="text" name="blueTeam" placeholder="Blue Team" required>
+            <label for="blueTeamWins">Blue Team Wins</label>
+            <input type="number" name="blueTeamWins" placeholder="0" required>
+            <label for="redTeam">Red Team</label>
+            <input type="text" name="redTeam" placeholder="Red Team" required>
+            <label for="redTeamWins">Red Team Wins</label>
+            <input type="number" name="redTeamWins" placeholder="0" required>
+            <label for="matchID">Game ID (Optional)</label>
+            <input type="text" name="matchID" placeholder="Game ID">
+            <button type="submit">Submit Results</button>
+        </form>
+    </div>
+</body>
+</html>
