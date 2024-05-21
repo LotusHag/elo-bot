@@ -18,9 +18,11 @@ const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageG
 
     const actualScore = isWinner ? 1 : 0;
 
-    // Determine K-factor based on win streak
-    const baseKFactor = player.wins + player.losses < 10 ? 30 : 24; // 1.25 times for the first 10 games
-    const adjustedKFactor = baseKFactor + Math.min(winStreak * 2, 10); // Cap the increase from win streak
+    // Determine K-factor based on number of games played
+    const totalGames = player.wins + player.losses;
+    const baseKFactor = 24;
+    const initialGameMultiplier = totalGames < 10 ? 1.5 : 1;
+    const adjustedKFactor = baseKFactor * initialGameMultiplier;
 
     // Calculate Elo change
     let eloChange = calculateEloChange(player.elo, averageEnemyElo, actualScore, adjustedKFactor);
