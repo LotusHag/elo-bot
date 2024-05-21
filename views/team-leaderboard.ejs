@@ -4,7 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Team Leaderboard</title>
-    <link rel="stylesheet" href="/styles.css">
+    <style>
+        body {
+            background-color: #01133D;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-container a {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-container a:hover {
+            background-color: #555;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #555;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #333;
+        }
+    </style>
 </head>
 <body>
     <div class="nav-container">

@@ -5,9 +5,10 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-mongoose.connect('mongodb://localhost/eloDB', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
+mongoose.connect('mongodb://localhost/eloDB', {}).then(() => {
+    console.log('Connected to MongoDB');
+}).catch((error) => {
+    console.error('MongoDB connection error:', error);
 });
 
 app.use(express.urlencoded({ extended: true }));
