@@ -55,6 +55,7 @@
             <tr>
                 <th>Rank</th>
                 <th>Team</th>
+                <th>Elo</th>
                 <th>Wins</th>
                 <th>Losses</th>
             </tr>
@@ -64,6 +65,7 @@
                 <tr>
                     <td><%= index + 1 %></td>
                     <td><%= team.name %></td>
+                    <td><%= Math.round(team.elo) %></td>
                     <td><%= team.wins %></td>
                     <td><%= team.losses %></td>
                 </tr>

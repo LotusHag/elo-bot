@@ -26,26 +26,30 @@
             background-color: #555;
         }
         .form-container {
-            background-color: #333;
+            width: 300px;
+            margin: 0 auto;
             padding: 20px;
-            border-radius: 5px;
-            width: 400px;
-            margin: auto;
+            background-color: #333;
+            border-radius: 10px;
         }
-        .form-container input[type="text"], .form-container input[type="number"], .form-container select {
+        .form-container h2 {
+            text-align: center;
+        }
+        .form-container input, .form-container select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
-        .form-container input[type="submit"] {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 20px;
+        .form-container button {
+            width: calc(100% - 20px);
+            padding: 10px;
             border: none;
             border-radius: 5px;
-            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -70,7 +74,7 @@
             <input type="number" name="redTeamWins" placeholder="0" required>
             <label for="matchID">Game ID (Optional)</label>
             <input type="text" name="matchID" placeholder="Game ID">
-            <input type="submit" value="Submit Results">
+            <button type="submit">Submit Results</button>
         </form>
     </div>
 </body>

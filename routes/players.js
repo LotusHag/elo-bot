@@ -19,11 +19,11 @@ const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageG
     const actualScore = isWinner ? 1 : 0;
 
     // Determine K-factor based on win streak
-    const kFactorBase = player.wins + player.losses < 10 ? 24 : 16;
-    const kFactor = kFactorBase + Math.min(winStreak * 2, 10); // Cap the increase from win streak
+    const baseKFactor = player.wins + player.losses < 10 ? 30 : 24; // 1.25 times for the first 10 games
+    const adjustedKFactor = baseKFactor + Math.min(winStreak * 2, 10); // Cap the increase from win streak
 
     // Calculate Elo change
-    let eloChange = calculateEloChange(player.elo, averageEnemyElo, actualScore, kFactor);
+    let eloChange = calculateEloChange(player.elo, averageEnemyElo, actualScore, adjustedKFactor);
 
     // Adjust Elo change based on player's relative position in the game and team difference
     if (player.elo > averageGameElo) {
@@ -38,6 +38,7 @@ const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageG
         eloChange *= 1.1; // Player's team is weaker
     }
 
+    // Update player stats
     if (isWinner) {
         player.wins += 1;
         player.elo += eloChange;
