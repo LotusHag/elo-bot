@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Game Teams</title>
+    <style>
+        body {
+            background-color: #01133D;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .nav-container {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-container a {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-container a:hover {
+            background-color: #555;
+        }
+        .teams-container {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+        }
+        .team {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+            width: 45%;
+        }
+        .team h2 {
+            text-align: center;
+        }
+        .team ul {
+            list-style: none;
+            padding: 0;
+        }
+        .team li {
+            padding: 10px 0;
+            border-bottom: 1px solid #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+        <a href="/players/leaderboard">Player Leaderboard</a>
+        <a href="/teams/leaderboard">Team Leaderboard</a>
+        <a href="/players/input">Submit Player Results</a>
+        <a href="/teams/input">Submit Team Results</a>
+        <a href="/custom-game/setup">Create Custom Game</a>
+    </div>
+    <h1>Custom Game Teams</h1>
+    <div class="teams-container">
+        <div class="team">
+            <h2>Team 1 - <%= Math.round(team1.reduce((sum, player) => sum + player.elo, 0) / team1.length) %></h2>
+            <ul>
+                <% team1.forEach(player => { %>
+                    <% if (player) { %>
+                        <li><%= player.name %> - <%= player.role %> - Elo: <%= Math.round(player.elo) %></li>
+                    <% } %>
+                <% }) %>
+            </ul>
+        </div>
+        <div class="team">
+            <h2>Team 2 -  <%= Math.round(team2.reduce((sum, player) => sum + player.elo, 0) / team2.length) %></h2>
+            <ul>
+                <% team2.forEach(player => { %>
+                    <% if (player) { %>
+                        <li><%= player.name %> - <%= player.role %> - Elo: <%= Math.round(player.elo) %></li>
+                    <% } %>
+                <% }) %>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

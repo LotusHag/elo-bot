@@ -20,10 +20,12 @@ app.set('views', path.join(__dirname, 'views'));
 const indexRouter = require('./routes/index');
 const playersRouter = require('./routes/players');
 const teamsRouter = require('./routes/teams');
+const customGameRouter = require('./routes/custom-game');
 
 app.use('/', indexRouter);
 app.use('/players', playersRouter);
 app.use('/teams', teamsRouter);
+app.use('/custom-game', customGameRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

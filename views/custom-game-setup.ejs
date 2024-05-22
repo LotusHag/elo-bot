@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Team Results</title>
+    <title>Custom Game Setup</title>
     <style>
         body {
             background-color: #01133D;
@@ -26,30 +26,26 @@
             background-color: #555;
         }
         .form-container {
-            width: 300px;
-            margin: 0 auto;
-            padding: 20px;
             background-color: #333;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            margin: auto;
         }
-        .form-container h2 {
-            text-align: center;
-        }
-        .form-container input, .form-container select {
+        .form-container input[type="text"], .form-container select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
-        .form-container button {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
+        .form-container input[type="submit"] {
             background-color: #4CAF50;
             color: white;
-            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -62,20 +58,23 @@
         <a href="/teams/input">Submit Team Results</a>
         <a href="/custom-game/setup">Create Custom Game</a>
     </div>
-    <h1>Submit Team Results</h1>
+    <h1>Custom Game Setup</h1>
     <div class="form-container">
-        <form action="/teams/input" method="POST">
-            <label for="blueTeam">Blue Team</label>
-            <input type="text" name="blueTeam" placeholder="Blue Team" required>
-            <label for="blueTeamWins">Blue Team Wins</label>
-            <input type="number" name="blueTeamWins" placeholder="0" required>
-            <label for="redTeam">Red Team</label>
-            <input type="text" name="redTeam" placeholder="Red Team" required>
-            <label for="redTeamWins">Red Team Wins</label>
-            <input type="number" name="redTeamWins" placeholder="0" required>
-            <label for="matchID">Game ID (Optional)</label>
-            <input type="text" name="matchID" placeholder="Game ID">
-            <button type="submit">Submit Results</button>
+        <form action="/custom-game/setup" method="POST">
+            <% for (let i = 0; i < 10; i++) { %>
+                <h2>Player <%= i + 1 %></h2>
+                <input type="text" name="players[<%= i %>][name]" placeholder="Player Name" required>
+                <label for="role">Preferred Role:</label>
+                <select name="players[<%= i %>][role]" required>
+                    <option value="Top">Top</option>
+                    <option value="Jungle">Jungle</option>
+                    <option value="Mid">Mid</option>
+                    <option value="Bot">Bot</option>
+                    <option value="Support">Support</option>
+                    <option value="Fill">Fill</option>
+                </select>
+            <% } %>
+            <input type="submit" value="Create Teams">
         </form>
     </div>
 </body>
