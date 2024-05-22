@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Player = require('../models/player');
 const Match = require('../models/match');
+const LeaderboardHistory = require('../models/leaderboardHistory');
 
 // Helper function to calculate Elo change
 const calculateEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, matchImportance, winStreak, isWinner) => {
@@ -9,14 +10,14 @@ const calculateEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, ma
     const modifiedActualScore = actualScore === 1 ? actualScore + 0.05 : actualScore - 0.05;
     const winStreakMultiplier = winStreak > 2 ? 1 + (Math.min(winStreak - 2, 3) * 0.035) : 1; // 3.5% per win streak above 2, capped at 5 games
     let eloChange = matchImportance * kFactor * winStreakMultiplier * (modifiedActualScore - expectedScore);
-    
+
     // Apply the win/loss multiplier
     if (isWinner) {
         eloChange *= 1.25;
     } else {
         eloChange *= 0.9;
     }
-    
+
     return eloChange;
 };
 
@@ -63,6 +64,24 @@ const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageG
     }
 
     await player.save();
+};
+
+// Function to save the current leaderboard state
+const saveCurrentLeaderboardState = async () => {
+    const players = await Player.find().sort({ elo: -1 }).exec();
+    const timestamp = new Date();
+
+    const leaderboardEntries = players.map((player, index) => ({
+        playerId: player._id,
+        elo: player.elo,
+        rank: index + 1,
+        wins: player.wins,
+        losses: player.losses,
+        winStreak: player.winStreak,
+        timestamp
+    }));
+
+    await LeaderboardHistory.insertMany(leaderboardEntries);
 };
 
 // Route to display player input form
@@ -114,6 +133,8 @@ router.post('/input', async (req, res) => {
     const blueTeamWin = winner === 'Blue Team';
     const matchImportance = 1; // You can adjust this value or make it dynamic based on the match's importance
 
+    await saveCurrentLeaderboardState(); // Save the current leaderboard state before updating
+
     for (const playerName of blueTeamNames) {
         const player = playerDocs.find(player => player.name.toLowerCase() === playerName.toLowerCase());
         const winStreak = player.winStreak || 0;
@@ -143,7 +164,8 @@ router.post('/input', async (req, res) => {
 router.get('/leaderboard', async (req, res) => {
     try {
         const players = await Player.find().sort({ elo: -1 }).exec();
-        res.render('player-leaderboard', { players });
+        const previousLeaderboard = await LeaderboardHistory.find().sort({ timestamp: -1 }).limit(players.length).exec();
+        res.render('player-leaderboard', { players, previousLeaderboard });
     } catch (error) {
         console.error(error);
         res.status(500).send('Internal Server Error');

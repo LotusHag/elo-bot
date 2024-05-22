@@ -39,6 +39,27 @@
         th {
             background-color: #333;
         }
+        .positive-change {
+            color: green;
+        }
+        .negative-change {
+            color: red;
+        }
+        .rank-header, .elo-header {
+            text-align: center;
+        }
+        .rank-column {
+            width: 60px; /* Adjust this width to fit 3 flames */
+        }
+        .change-column, .elo-change-column {
+            width: 50px; /* Adjust this width as needed */
+        }
+        .games-column, .wins-column, .losses-column {
+            width: 40px; /* Adjust this width as needed */
+        }
+        .player-name-column {
+            width: auto; /* Allow this column to expand */
+        }
     </style>
 </head>
 <body>
@@ -54,29 +75,48 @@
     <table>
         <thead>
             <tr>
-                <th>Rank</th>
-                <th>Player</th>
-                <th>Elo</th>
+                <th class="rank-header" colspan="2">Rank</th>
+                <th class="player-name-column">Player</th>
+                <th class="elo-header" colspan="2">Elo</th>
                 <th>Winrate</th>
-                <th>Wins</th>
-                <th>Losses</th>
+                <th class="games-column">G</th>
+                <th class="wins-column">W</th>
+                <th class="losses-column">L</th>
+            </tr>
+            <tr>
+                <th class="change-column"></th>
+                <th class="rank-column"></th>
+                <th></th>
+                <th class="elo-change-column"></th>
+                <th></th>
+                <th></th>
+                <th class="games-column"></th>
+                <th class="wins-column"></th>
+                <th class="losses-column"></th>
             </tr>
         </thead>
         <tbody>
-            <% players.forEach((player, index) => { %>
+            <% players.forEach((player, index) => { 
+                const previousEntry = previousLeaderboard.find(entry => entry.playerId.toString() === player._id.toString());
+                const eloChange = previousEntry ? player.elo - previousEntry.elo : 0;
+                const rankChange = previousEntry ? previousEntry.rank - (index + 1) : 0;
+            %>
                 <tr>
-                    <td>
+                    <td class="change-column <%= rankChange > 0 ? 'positive-change' : (rankChange < 0 ? 'negative-change' : '') %>"><%= rankChange %></td>
+                    <td class="rank-column">
                         <% if (player.winStreak >= 3) { %>
-                            <%= '🔥'.repeat(player.winStreak - 2) %>
+                            <%= '🔥'.repeat(Math.min(player.winStreak - 2, 3)) %>
                         <% } else { %>
                             <%= index + 1 %>
                         <% } %>
                     </td>
-                    <td><%= player.name %></td>
+                    <td class="player-name-column"><%= player.name %></td>
+                    <td class="elo-change-column <%= eloChange > 0 ? 'positive-change' : (eloChange < 0 ? 'negative-change' : '') %>"><%= Math.round(eloChange) %></td>
                     <td><%= Math.round(player.elo) %></td>
                     <td><%= (player.wins + player.losses > 0) ? (Math.round((player.wins / (player.wins + player.losses)) * 100) + '%') : '0%' %></td>
-                    <td><%= player.wins %></td>
-                    <td><%= player.losses %></td>
+                    <td class="games-column"><%= player.wins + player.losses %></td>
+                    <td class="wins-column"><%= player.wins %></td>
+                    <td class="losses-column"><%= player.losses %></td>
                 </tr>
             <% }) %>
         </tbody>

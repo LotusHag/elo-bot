@@ -2,102 +2,106 @@ const express = require('express');
 const router = express.Router();
 const Player = require('../models/player');
 
-// Route to display custom game setup form
-router.get('/setup', async (req, res) => {
-    const players = await Player.find().sort({ elo: -1 }).exec();
-    res.render('custom-game-setup', { players });
-});
+// Simulated Annealing function for team balancing
+const simulatedAnnealing = (players, initialTemp, coolingRate) => {
+    let currentSolution = players.slice();
+    let bestSolution = players.slice();
+    let currentTemp = initialTemp;
 
-// Route to handle custom game setup submission
-router.post('/setup', async (req, res) => {
+    const calculateEloDifference = (team1, team2) => {
+        const avgElo1 = team1.reduce((sum, p) => sum + p.elo, 0) / team1.length;
+        const avgElo2 = team2.reduce((sum, p) => sum + p.elo, 0) / team2.length;
+        return Math.abs(avgElo1 - avgElo2);
+    };
+
+    const generateNeighbor = (solution) => {
+        const newSolution = solution.slice();
+        const idx1 = Math.floor(Math.random() * newSolution.length);
+        let idx2 = Math.floor(Math.random() * newSolution.length);
+        while (idx1 === idx2) {
+            idx2 = Math.floor(Math.random() * newSolution.length);
+        }
+        [newSolution[idx1], newSolution[idx2]] = [newSolution[idx2], newSolution[idx1]];
+        return newSolution;
+    };
+
+    const acceptanceProbability = (currentEloDiff, newEloDiff, temp) => {
+        if (newEloDiff < currentEloDiff) {
+            return 1.0;
+        }
+        return Math.exp((currentEloDiff - newEloDiff) / temp);
+    };
+
+    while (currentTemp > 1) {
+        const newSolution = generateNeighbor(currentSolution);
+        const team1 = newSolution.slice(0, 5);
+        const team2 = newSolution.slice(5);
+        const currentEloDiff = calculateEloDifference(currentSolution.slice(0, 5), currentSolution.slice(5));
+        const newEloDiff = calculateEloDifference(team1, team2);
+
+        if (acceptanceProbability(currentEloDiff, newEloDiff, currentTemp) > Math.random()) {
+            currentSolution = newSolution.slice();
+        }
+
+        if (newEloDiff < calculateEloDifference(bestSolution.slice(0, 5), bestSolution.slice(5))) {
+            bestSolution = newSolution.slice();
+        }
+
+        currentTemp *= coolingRate;
+    }
+
+    return bestSolution;
+};
+
+router.post('/create-teams', async (req, res) => {
     const { players } = req.body;
 
-    // Default Elo for new players
-    const defaultElo = 2000;
+    // Fetch player data from the database
+    let playerDocs = await Player.find({ name: { $in: players.map(p => p.name) } });
 
-    // Process players, create new ones if necessary, and assign roles
-    const roles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
-    let allPlayers = [];
-
-    // Fetch players from database or create new ones with default Elo
-    for (const playerData of players) {
-        let player = await Player.findOne({ name: new RegExp('^' + playerData.name + '$', 'i') });
-        if (!player) {
-            player = new Player({ name: playerData.name, elo: defaultElo });
-            await player.save();
-        }
-        player.role = playerData.role;
-        allPlayers.push(player);
-    }
-
-    // Sort players by Elo (ascending)
-    allPlayers.sort((a, b) => a.elo - b.elo);
-
-    // Randomly assign players to teams
-    let team1 = [];
-    let team2 = [];
-    let team1Elo = 0;
-    let team2Elo = 0;
-
-    // Assign players to teams while balancing Elo
-    for (let i = 0; i < allPlayers.length; i++) {
-        if (team1.length < 5 && team2.length < 5) {
-            // Assign based on current total Elo to balance teams
-            if (team1Elo <= team2Elo) {
-                team1.push(allPlayers[i]);
-                team1Elo += allPlayers[i].elo;
-            } else {
-                team2.push(allPlayers[i]);
-                team2Elo += allPlayers[i].elo;
-            }
-        } else if (team1.length < 5) {
-            team1.push(allPlayers[i]);
-            team1Elo += allPlayers[i].elo;
+    // Create any missing players
+    for (let player of players) {
+        let playerDoc = playerDocs.find(p => p.name === player.name);
+        if (!playerDoc) {
+            playerDoc = new Player({ name: player.name, role: player.role, elo: 2000 });
+            await playerDoc.save();
+            playerDocs.push(playerDoc);
         } else {
-            team2.push(allPlayers[i]);
-            team2Elo += allPlayers[i].elo;
+            playerDoc.role = player.role; // Update role
         }
     }
 
-    // Assign roles prioritizing lower Elo players
-    function assignRoles(team) {
-        const roleMap = {
-            Top: null,
-            Jungle: null,
-            Mid: null,
-            Bot: null,
-            Support: null,
-        };
-        const fillPlayers = [];
+    // Assign roles to players
+    playerDocs.forEach(playerDoc => {
+        const player = players.find(p => p.name === playerDoc.name);
+        playerDoc.role = player.role;
+    });
 
-        // Try to assign preferred roles
-        for (const player of team) {
-            if (roleMap[player.role] === null) {
-                roleMap[player.role] = player;
-            } else {
-                fillPlayers.push(player);
+    // Apply Simulated Annealing to optimize team balance
+    const optimizedPlayers = simulatedAnnealing(playerDocs, 1000, 0.995);
+    const team1 = optimizedPlayers.slice(0, 5);
+    const team2 = optimizedPlayers.slice(5);
+
+    // Ensure full teams with all roles
+    const ensureFullTeams = (team) => {
+        const requiredRoles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+        const assignedRoles = team.map(player => player.role);
+
+        requiredRoles.forEach(role => {
+            if (!assignedRoles.includes(role)) {
+                const fillPlayerIndex = team.findIndex(p => p.role === 'Fill');
+                if (fillPlayerIndex >= 0) {
+                    team[fillPlayerIndex].role = role;
+                    assignedRoles.push(role);
+                }
             }
-        }
+        });
+    };
 
-        // Fill remaining roles with fill players
-        for (const role in roleMap) {
-            if (roleMap[role] === null && fillPlayers.length > 0) {
-                roleMap[role] = fillPlayers.shift();
-                roleMap[role].role = role;  // Update role to the assigned role
-            }
-        }
+    ensureFullTeams(team1);
+    ensureFullTeams(team2);
 
-        // Ensure all roles are filled
-        return Object.values(roleMap);
-    }
-
-    team1 = assignRoles(team1);
-    team2 = assignRoles(team2);
-
-    // Logging to debug
-    console.log('Team 1:', team1);
-    console.log('Team 2:', team2);
-
+    // Render the results
     res.render('custom-game-teams', { team1, team2 });
 });
 
