@@ -53,15 +53,23 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
     return bestSolution;
 };
 
-router.post('/create-teams', async (req, res) => {
-    const { players } = req.body;
+// Route to render the custom game setup page
+router.get('/setup', (req, res) => {
+    res.render('custom-game-setup');
+});
 
-    // Fetch player data from the database
-    let playerDocs = await Player.find({ name: { $in: players.map(p => p.name) } });
+router.post('/create-teams', async (req, res) => {
+    const players = req.body.players.map(p => ({
+        name: p.name.toLowerCase().trim(),
+        role: p.role
+    }));
+
+    // Fetch player data from the database using case-insensitive regex
+    let playerDocs = await Player.find({ name: { $in: players.map(p => new RegExp('^' + p.name + '$', 'i')) } });
 
     // Create any missing players
     for (let player of players) {
-        let playerDoc = playerDocs.find(p => p.name === player.name);
+        let playerDoc = playerDocs.find(p => p.name.toLowerCase() === player.name.toLowerCase());
         if (!playerDoc) {
             playerDoc = new Player({ name: player.name, role: player.role, elo: 2000 });
             await playerDoc.save();
@@ -73,7 +81,7 @@ router.post('/create-teams', async (req, res) => {
 
     // Assign roles to players
     playerDocs.forEach(playerDoc => {
-        const player = players.find(p => p.name === playerDoc.name);
+        const player = players.find(p => p.name.toLowerCase() === playerDoc.name.toLowerCase());
         playerDoc.role = player.role;
     });
 

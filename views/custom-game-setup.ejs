@@ -60,7 +60,7 @@
     </div>
     <h1>Custom Game Setup</h1>
     <div class="form-container">
-        <form action="/custom-game/setup" method="POST">
+        <form action="/custom-game/create-teams" method="POST">
             <% for (let i = 0; i < 10; i++) { %>
                 <h2>Player <%= i + 1 %></h2>
                 <input type="text" name="players[<%= i %>][name]" placeholder="Player Name" required>
