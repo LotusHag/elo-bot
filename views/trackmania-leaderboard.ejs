@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Trackmania Leaderboard</title>
     <style>
         body {
             background-color: #01133D;
@@ -27,21 +27,19 @@
         .nav-container a:hover {
             background-color: #555;
         }
-        .games-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
         }
-        .game-card {
+        table, th, td {
+            border: 1px solid #555;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
             background-color: #333;
-            padding: 20px;
-            border-radius: 5px;
-            width: 200px;
-            text-align: center;
-        }
-        .game-card a {
-            color: #4CAF50;
-            text-decoration: none;
         }
     </style>
 </head>
@@ -50,6 +48,8 @@
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
             <a href="/profile">Profile</a>
+            <a href="/">Home</a>
+            <a href="/games/<%= game._id %>/input">Input Data</a>
         </div>
         <div>
             <% if (user) { %>
@@ -60,15 +60,28 @@
             <% } %>
         </div>
     </div>
-    <h1>Select a Game</h1>
-    <div class="games-list">
-        <% games.forEach(game => { %>
-            <div class="game-card">
-                <h2><%= game.name %></h2>
-                <p><%= game.description %></p>
-                <a href="/games/<%= game._id %>">Go to <%= game.name %></a>
-            </div>
-        <% }) %>
-    </div>
+    <h1>Trackmania Leaderboard</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Rank</th>
+                <th>Player</th>
+                <th>Map</th>
+                <th>Time (seconds)</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% records.forEach((record, index) => { %>
+                <tr>
+                    <td><%= index + 1 %></td>
+                    <td><%= record.player.name %></td>
+                    <td><%= record.map %></td>
+                    <td><%= record.time %></td>
+                    <td><%= record.date.toISOString().split('T')[0] %></td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
 </body>
 </html>

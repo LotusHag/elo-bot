@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Profile</title>
     <style>
         body {
             background-color: #01133D;
@@ -27,21 +27,23 @@
         .nav-container a:hover {
             background-color: #555;
         }
-        .games-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .game-card {
+        .profile-container {
             background-color: #333;
             padding: 20px;
             border-radius: 5px;
-            width: 200px;
+            width: 400px;
+            margin: auto;
+        }
+        .profile-container h2 {
             text-align: center;
         }
-        .game-card a {
-            color: #4CAF50;
-            text-decoration: none;
+        .profile-container ul {
+            list-style: none;
+            padding: 0;
+        }
+        .profile-container li {
+            padding: 10px 0;
+            border-bottom: 1px solid #555;
         }
     </style>
 </head>
@@ -49,7 +51,7 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/profile">Profile</a>
+            <a href="/">Home</a>
         </div>
         <div>
             <% if (user) { %>
@@ -60,15 +62,15 @@
             <% } %>
         </div>
     </div>
-    <h1>Select a Game</h1>
-    <div class="games-list">
-        <% games.forEach(game => { %>
-            <div class="game-card">
-                <h2><%= game.name %></h2>
-                <p><%= game.description %></p>
-                <a href="/games/<%= game._id %>">Go to <%= game.name %></a>
-            </div>
-        <% }) %>
+    <div class="profile-container">
+        <h2><%= user.username %>'s Profile</h2>
+        <ul>
+            <% user.playerIds.forEach(player => { %>
+                <li>
+                    <%= player.name %> (Elo: <%= player.elo %>) - <%= player.game.name %>
+                </li>
+            <% }) %>
+        </ul>
     </div>
 </body>
 </html>

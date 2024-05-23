@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Data for <%= game.name %></title>
+    <style>
+        body {
+            background-color: #01133D;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-container a {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-container a:hover {
+            background-color: #555;
+        }
+        .form-container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            margin: auto;
+        }
+        .form-container input[type="text"], .form-container select, .form-container textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .form-container input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <div>
+            <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+            <a href="/profile">Profile</a>
+            <a href="/">Home</a>
+        </div>
+        <div>
+            <% if (user) { %>
+                <span>Welcome, <%= user.username %>!</span>
+                <a href="/auth/logout">Logout</a>
+            <% } else { %>
+                <a href="/auth/login">Login</a>
+            <% } %>
+        </div>
+    </div>
+    <div class="form-container">
+        <h1>Input Data for <%= game.name %></h1>
+        <form action="/games/<%= game._id %>/input" method="POST">
+            <% if (game.name === 'Trackmania') { %>
+                <input type="text" name="player" placeholder="Player Name" required>
+                <input type="text" name="map" placeholder="Map Name" required>
+                <input type="number" name="time" placeholder="Completion Time (seconds)" required>
+            <% } else if (game.name === 'Smash') { %>
+                <input type="text" name="player1" placeholder="Player 1 Name" required>
+                <input type="text" name="player2" placeholder="Player 2 Name" required>
+                <select name="winner" required>
+                    <option value="player1">Player 1 Wins</option>
+                    <option value="player2">Player 2 Wins</option>
+                </select>
+            <% } else if (game.name === 'Rocket League') { %>
+                <textarea name="players" placeholder="Comma-separated Player Names (3v3)" required></textarea>
+                <select name="winner" required>
+                    <option value="blue">Blue Team Wins</option>
+                    <option value="red">Red Team Wins</option>
+                </select>
+            <% } else { %>
+                <textarea name="players" placeholder="Comma-separated Player Names (5v5)" required></textarea>
+                <select name="winner" required>
+                    <option value="blue">Blue Team Wins</option>
+                    <option value="red">Red Team Wins</option>
+                </select>
+            <% } %>
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+</body>
+</html>

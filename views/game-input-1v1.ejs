@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home</title>
+    <title>Input Data for <%= game.name %></title>
     <style>
         body {
             background-color: #01133D;
@@ -27,21 +27,27 @@
         .nav-container a:hover {
             background-color: #555;
         }
-        .games-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .game-card {
+        .form-container {
             background-color: #333;
             padding: 20px;
             border-radius: 5px;
-            width: 200px;
-            text-align: center;
+            width: 400px;
+            margin: auto;
         }
-        .game-card a {
-            color: #4CAF50;
-            text-decoration: none;
+        .form-container input[type="text"], .form-container select {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .form-container input[type="submit"] {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -50,6 +56,7 @@
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
             <a href="/profile">Profile</a>
+            <a href="/">Home</a>
         </div>
         <div>
             <% if (user) { %>
@@ -60,15 +67,18 @@
             <% } %>
         </div>
     </div>
-    <h1>Select a Game</h1>
-    <div class="games-list">
-        <% games.forEach(game => { %>
-            <div class="game-card">
-                <h2><%= game.name %></h2>
-                <p><%= game.description %></p>
-                <a href="/games/<%= game._id %>">Go to <%= game.name %></a>
-            </div>
-        <% }) %>
+    <div class="form-container">
+        <h1>Input Data for <%= game.name %></h1>
+        <form action="/games/<%= game._id %>/input" method="POST">
+            <input type="text" name="player1" placeholder="Player 1 Name" required>
+            <input type="text" name="player2" placeholder="Player 2 Name" required>
+            <h2>Winner</h2>
+            <select name="winner" required>
+                <option value="player1">Player 1 Wins</option>
+                <option value="player2">Player 2 Wins</option>
+            </select>
+            <input type="submit" value="Submit">
+        </form>
     </div>
 </body>
 </html>

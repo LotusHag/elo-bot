@@ -3,10 +3,10 @@ const mongoose = require('mongoose');
 const path = require('path');
 const session = require('express-session');
 const flash = require('connect-flash');
-const passport = require('./config/passport'); // Correct path to your passport configuration
+const passport = require('./config/passport');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001;
 
 mongoose.connect('mongodb://localhost/eloDB', {}).then(() => {
     console.log('Connected to MongoDB');
@@ -40,12 +40,16 @@ const playersRouter = require('./routes/players');
 const teamsRouter = require('./routes/teams');
 const customGameRouter = require('./routes/custom-game');
 const authRouter = require('./routes/auth');
+const profileRouter = require('./routes/profile');
+const gamesRouter = require('./routes/games');
 
 app.use('/', indexRouter);
 app.use('/players', playersRouter);
 app.use('/teams', teamsRouter);
 app.use('/custom-game', customGameRouter);
 app.use('/auth', authRouter);
+app.use('/profile', profileRouter);
+app.use('/games', gamesRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
