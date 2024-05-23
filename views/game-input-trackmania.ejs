@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Team Results</title>
+    <title>Input Data for <%= game.name %></title>
     <style>
         body {
             background-color: #01133D;
@@ -28,30 +28,26 @@
             background-color: #555;
         }
         .form-container {
-            width: 300px;
-            margin: 0 auto;
-            padding: 20px;
             background-color: #333;
-            border-radius: 10px;
+            padding: 20px;
+            border-radius: 5px;
+            width: 400px;
+            margin: auto;
         }
-        .form-container h2 {
-            text-align: center;
-        }
-        .form-container input, .form-container select {
+        .form-container input[type="text"], .form-container input[type="number"] {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
-        .form-container button {
-            width: calc(100% - 20px);
-            padding: 10px;
-            border: none;
-            border-radius: 5px;
+        .form-container input[type="submit"] {
             background-color: #4CAF50;
             color: white;
-            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -59,11 +55,8 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/players/leaderboard">Player Leaderboard</a>
-            <a href="/teams/leaderboard">Team Leaderboard</a>
-            <a href="/players/input">Submit Player Results</a>
-            <a href="/teams/input">Submit Team Results</a>
-            <a href="/custom-game/setup">Create Custom Game</a>
+            <a href="/profile">Profile</a>
+            <a href="/">Home</a>
         </div>
         <div>
             <% if (user) { %>
@@ -74,20 +67,13 @@
             <% } %>
         </div>
     </div>
-    <h1>Submit Team Results</h1>
     <div class="form-container">
-        <form action="/teams/input" method="POST">
-            <label for="blueTeam">Blue Team</label>
-            <input type="text" name="blueTeam" placeholder="Blue Team" required>
-            <label for="blueTeamWins">Blue Team Wins</label>
-            <input type="number" name="blueTeamWins" placeholder="0" required>
-            <label for="redTeam">Red Team</label>
-            <input type="text" name="redTeam" placeholder="Red Team" required>
-            <label for="redTeamWins">Red Team Wins</label>
-            <input type="number" name="redTeamWins" placeholder="0" required>
-            <label for="matchID">Game ID (Optional)</label>
-            <input type="text" name="matchID" placeholder="Game ID">
-            <button type="submit">Submit Results</button>
+        <h1>Input Data for <%= game.name %></h1>
+        <form action="/games/<%= game._id %>/input" method="POST">
+            <input type="text" name="player" placeholder="Player Name" required>
+            <input type="text" name="map" placeholder="Map Name" required>
+            <input type="number" name="time" placeholder="Completion Time (seconds)" required>
+            <input type="submit" value="Submit">
         </form>
     </div>
 </body>

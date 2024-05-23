@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 
-const trackmaniaSchema = new mongoose.Schema({
+const speedrunSchema = new mongoose.Schema({
     player: { type: mongoose.Schema.Types.ObjectId, ref: 'Player', required: true },
+    gameCategory: { type: String, required: true }, // e.g., "Trackmania"
     map: { type: String, required: true },
     time: { type: Number, required: true }, // Time in seconds
     date: { type: Date, default: Date.now }
 });
 
-const Trackmania = mongoose.model('Trackmania', trackmaniaSchema);
+const Speedrun = mongoose.model('Speedrun', speedrunSchema);
 
-module.exports = Trackmania;
+module.exports = Speedrun;

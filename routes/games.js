@@ -3,25 +3,38 @@ const router = express.Router();
 const Game = require('../models/game');
 const Player = require('../models/player');
 const Match = require('../models/match');
-const Trackmania = require('../models/trackmania');
+const Speedrun = require('../models/speedrun');
 const { ensureAuthenticated } = require('../config/auth');
+const path = require('path');
+
+// Utility function to load the correct Elo calculation module
+function loadEloCalculationModule(gameName) {
+    const gameNameFormatted = gameName.replace(/ /g, '_'); // Replace spaces with underscores
+    try {
+        const filePath = path.join(__dirname, `../eloCalculations/${gameNameFormatted}-Elo-Calc.js`);
+        return require(filePath);
+    } catch (error) {
+        console.error(`Error loading Elo calculation module for game: ${gameName}`, error);
+        return null;
+    }
+}
 
 router.get('/:gameId', ensureAuthenticated, async (req, res) => {
     const gameId = req.params.gameId;
     const game = await Game.findById(gameId).exec();
-    if (game.name === 'Trackmania') {
-        const records = await Trackmania.find().populate('player').sort({ time: 1 }).exec();
-        res.render('trackmania-leaderboard', { game, records });
+    if (game.name === 'Trackmania' || game.category === 'Speedrun') {
+        const records = await Speedrun.find().populate('player').sort({ time: 1 }).exec();
+        res.render('game-leaderboard-speedrunning', { game, records });
     } else {
         const players = await Player.find({ game: gameId }).sort({ elo: -1 }).exec();
-        res.render('game-leaderboard', { game, players });
+        res.render('game-leaderboard', { game, players, previousLeaderboard: [] });
     }
 });
 
 router.get('/:gameId/input', ensureAuthenticated, async (req, res) => {
     const game = await Game.findById(req.params.gameId).exec();
-    if (game.name === 'Trackmania') {
-        res.render('game-input-trackmania', { game });
+    if (game.name === 'Trackmania' || game.category === 'Speedrun') {
+        res.render('game-input-speedrun', { game });
     } else if (game.name === 'Smash') {
         res.render('game-input-1v1', { game });
     } else if (game.name === 'Rocket League') {
@@ -34,15 +47,21 @@ router.get('/:gameId/input', ensureAuthenticated, async (req, res) => {
 router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
     const gameId = req.params.gameId;
     const game = await Game.findById(gameId).exec();
+    const eloCalcModule = loadEloCalculationModule(game.name);
+    if (!eloCalcModule) {
+        console.error(`Elo calculation module not found for game: ${game.name}`);
+        return res.status(500).send('Elo calculation module not found');
+    }
+    const { calculateEloChange, applyNormalDistribution } = eloCalcModule;
 
-    if (game.name === 'Trackmania') {
-        const { player, map, time } = req.body;
+    if (game.name === 'Trackmania' || game.category === 'Speedrun') {
+        const { player, gameCategory, map, time } = req.body;
         let playerDoc = await Player.findOne({ name: player, game: gameId }).exec();
         if (!playerDoc) {
             playerDoc = new Player({ name: player, game: gameId });
             await playerDoc.save();
         }
-        const record = new Trackmania({ player: playerDoc._id, map, time });
+        const record = new Speedrun({ player: playerDoc._id, gameCategory, map, time });
         await record.save();
     } else if (game.name === 'Smash') {
         const { player1, player2, winner } = req.body;
@@ -53,12 +72,15 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
         if (!player2Doc) player2Doc = new Player({ name: player2, game: gameId });
 
         if (winner === 'player1') {
-            player1Doc.elo = calculateElo(player1Doc.elo, player2Doc.elo, 1);
-            player2Doc.elo = calculateElo(player2Doc.elo, player1Doc.elo, 0);
+            player1Doc.elo = calculateEloChange(player1Doc.elo, player2Doc.elo, 1, 24, 1, player1Doc.winStreak, true);
+            player2Doc.elo = calculateEloChange(player2Doc.elo, player1Doc.elo, 0, 24, 1, player2Doc.winStreak, false);
         } else {
-            player1Doc.elo = calculateElo(player1Doc.elo, player2Doc.elo, 0);
-            player2Doc.elo = calculateElo(player2Doc.elo, player1Doc.elo, 1);
+            player1Doc.elo = calculateEloChange(player1Doc.elo, player2Doc.elo, 0, 24, 1, player1Doc.winStreak, false);
+            player2Doc.elo = calculateEloChange(player2Doc.elo, player1Doc.elo, 1, 24, 1, player2Doc.winStreak, true);
         }
+
+        console.log(`Player 1 Elo: ${player1Doc.elo}`);
+        console.log(`Player 2 Elo: ${player2Doc.elo}`);
 
         await player1Doc.save();
         await player2Doc.save();
@@ -71,27 +93,71 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
         let redTeamDocs = await Player.find({ name: { $in: redTeamNames }, game: gameId }).exec();
 
         for (let playerName of blueTeamNames) {
-            if (!blueTeamDocs.some(p => p.name === playerName)) {
-                const newPlayer = new Player({ name: playerName, game: gameId });
-                await newPlayer.save();
-                blueTeamDocs.push(newPlayer);
+            let playerDoc = blueTeamDocs.find(p => p.name === playerName);
+            if (!playerDoc) {
+                playerDoc = new Player({ name: playerName, game: gameId });
+                await playerDoc.save();
+                blueTeamDocs.push(playerDoc);
             }
         }
 
         for (let playerName of redTeamNames) {
-            if (!redTeamDocs.some(p => p.name === playerName)) {
-                const newPlayer = new Player({ name: playerName, game: gameId });
-                await newPlayer.save();
-                redTeamDocs.push(newPlayer);
+            let playerDoc = redTeamDocs.find(p => p.name === playerName);
+            if (!playerDoc) {
+                playerDoc = new Player({ name: playerName, game: gameId });
+                await playerDoc.save();
+                redTeamDocs.push(playerDoc);
             }
         }
 
-        if (game.name === 'Rocket League') {
-            // Custom logic for Rocket League (3v3)
-            updateEloForTeamMatch(blueTeamDocs, redTeamDocs, winner === 'blue');
-        } else {
-            // Generic logic for 5v5 games
-            updateEloForTeamMatch(blueTeamDocs, redTeamDocs, winner === 'blue');
+        const averageBlueTeamElo = blueTeamDocs.reduce((sum, player) => sum + player.elo, 0) / blueTeamDocs.length;
+        const averageRedTeamElo = redTeamDocs.reduce((sum, player) => sum + player.elo, 0) / redTeamDocs.length;
+        const averageGameElo = (averageBlueTeamElo + averageRedTeamElo) / 2;
+        const teamEloDifference = averageBlueTeamElo - averageRedTeamElo;
+        const blueTeamWin = winner === 'blue';
+
+        for (const player of blueTeamDocs) {
+            const eloChange = calculateEloChange(
+                player.elo,
+                averageRedTeamElo,
+                blueTeamWin ? 1 : 0,
+                24,
+                1,
+                player.winStreak,
+                blueTeamWin
+            );
+            player.elo += applyNormalDistribution(eloChange, teamEloDifference, player.elo - averageGameElo);
+            if (blueTeamWin) {
+                player.wins += 1;
+                player.winStreak += 1;
+            } else {
+                player.losses += 1;
+                player.winStreak = 0;
+            }
+            console.log(`Blue Team Player: ${player.name}, New Elo: ${player.elo}`);
+            await player.save();
+        }
+
+        for (const player of redTeamDocs) {
+            const eloChange = calculateEloChange(
+                player.elo,
+                averageBlueTeamElo,
+                blueTeamWin ? 0 : 1,
+                24,
+                1,
+                player.winStreak,
+                !blueTeamWin
+            );
+            player.elo += applyNormalDistribution(eloChange, teamEloDifference, player.elo - averageGameElo);
+            if (!blueTeamWin) {
+                player.wins += 1;
+                player.winStreak += 1;
+            } else {
+                player.losses += 1;
+                player.winStreak = 0;
+            }
+            console.log(`Red Team Player: ${player.name}, New Elo: ${player.elo}`);
+            await player.save();
         }
 
         // Save match results
@@ -106,46 +172,5 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
 
     res.redirect(`/games/${gameId}`);
 });
-
-function updateEloForTeamMatch(blueTeamDocs, redTeamDocs, blueWins) {
-    const blueTeamElo = averageElo(blueTeamDocs);
-    const redTeamElo = averageElo(redTeamDocs);
-    const kFactor = 32;
-    const score = blueWins ? 1 : 0;
-
-    blueTeamDocs.forEach(player => {
-        player.elo = calculateElo(player.elo, redTeamElo, score);
-        if (blueWins) {
-            player.wins += 1;
-            player.winStreak += 1;
-        } else {
-            player.losses += 1;
-            player.winStreak = 0;
-        }
-        player.save();
-    });
-
-    redTeamDocs.forEach(player => {
-        player.elo = calculateElo(player.elo, blueTeamElo, 1 - score);
-        if (!blueWins) {
-            player.wins += 1;
-            player.winStreak += 1;
-        } else {
-            player.losses += 1;
-            player.winStreak = 0;
-        }
-        player.save();
-    });
-}
-
-function averageElo(teamDocs) {
-    return teamDocs.reduce((sum, player) => sum + player.elo, 0) / teamDocs.length;
-}
-
-function calculateElo(playerElo, opponentElo, score) {
-    const kFactor = 32;
-    const expectedScore = 1 / (1 + Math.pow(10, (opponentElo - playerElo) / 400));
-    return playerElo + kFactor * (score - expectedScore);
-}
 
 module.exports = router;
