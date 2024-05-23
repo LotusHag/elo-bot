@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= game.name %> Leaderboard</title>
+    <title>Game Leaderboard</title>
     <style>
         body {
             background-color: #01133D;
@@ -68,9 +68,8 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/profile">Profile</a>
             <a href="/">Home</a>
-            <a href="/games/<%= game._id %>/input">Input Data</a>
+            <a href="/games/<%= game._id %>/input">Submit Game Results</a>
         </div>
         <div>
             <% if (user) { %>

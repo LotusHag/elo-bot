@@ -12,11 +12,41 @@ const calculateEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, ma
     return eloChange;
 };
 
-const applyNormalDistribution = (eloChange, teamEloDifference, playerEloDiff) => {
-    const scaleFactor = 0.0025;
-    const teamScale = Math.min(Math.max(teamEloDifference * scaleFactor, -0.75), 0.75);
-    const playerScale = Math.min(Math.max(playerEloDiff * scaleFactor, -0.75), 0.75);
-    return eloChange * (1 + teamScale + playerScale);
+const applyNormalDistribution = (value, scale) => {
+    const cappedValue = Math.min(Math.max(value * scale, -0.75), 0.75);
+    return 1 + cappedValue;
 };
 
-module.exports = { calculateEloChange, applyNormalDistribution };
+const updatePlayerStats = async (player, isWinner, averageEnemyElo, averageGameElo, teamEloDifference, winStreak, matchImportance) => {
+    const actualScore = isWinner ? 1 : 0;
+
+    const totalGames = player.wins + player.losses;
+    const baseKFactor = 24 * 1.33;
+    const initialGameMultiplier = totalGames < 10 ? 1.5 : 1;
+    const adjustedKFactor = baseKFactor * initialGameMultiplier;
+
+    let eloChange = calculateEloChange(player.elo, averageEnemyElo, actualScore, adjustedKFactor, matchImportance, winStreak, isWinner);
+
+    const eloDifferenceScale = 0.0025;
+    const teamDifferenceScale = 0.0025;
+
+    const playerEloScaleFactor = applyNormalDistribution(player.elo - averageGameElo, eloDifferenceScale);
+    const teamEloScaleFactor = applyNormalDistribution(teamEloDifference, teamDifferenceScale);
+
+    eloChange *= playerEloScaleFactor;
+    eloChange *= teamEloScaleFactor;
+
+    if (isWinner) {
+        player.wins += 1;
+        player.elo += eloChange;
+        player.winStreak += 1;
+    } else {
+        player.losses += 1;
+        player.elo += eloChange;
+        player.winStreak = 0;
+    }
+
+    await player.save();
+};
+
+module.exports = { updatePlayerStats };

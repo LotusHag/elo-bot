@@ -82,7 +82,7 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
         console.log(`Player 1 Elo: ${player1Doc.elo}`);
         console.log(`Player 2 Elo: ${player2Doc.elo}`);
     } else {
-        const { blueTeam, redTeam, winner } = req.body;
+        const { blueTeam, redTeam, winner, matchID } = req.body;
         const blueTeamNames = blueTeam.map(name => name.trim());
         const redTeamNames = redTeam.map(name => name.trim());
 
@@ -92,23 +92,31 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
         for (let playerName of blueTeamNames) {
             let playerDoc = blueTeamDocs.find(p => p.name === playerName);
             if (!playerDoc) {
-                playerDoc = new Player({ name: playerName, game: gameId });
-                await playerDoc.save();
-                blueTeamDocs.push(playerDoc);
+                try {
+                    playerDoc = new Player({ name: playerName, game: gameId });
+                    await playerDoc.save();
+                    blueTeamDocs.push(playerDoc);
+                } catch (error) {
+                    console.error(`Error saving player ${playerName}:`, error);
+                }
             }
         }
 
         for (let playerName of redTeamNames) {
             let playerDoc = redTeamDocs.find(p => p.name === playerName);
             if (!playerDoc) {
-                playerDoc = new Player({ name: playerName, game: gameId });
-                await playerDoc.save();
-                redTeamDocs.push(playerDoc);
+                try {
+                    playerDoc = new Player({ name: playerName, game: gameId });
+                    await playerDoc.save();
+                    redTeamDocs.push(playerDoc);
+                } catch (error) {
+                    console.error(`Error saving player ${playerName}:`, error);
+                }
             }
         }
 
-        const averageBlueTeamElo = blueTeamDocs.length > 0 ? blueTeamDocs.reduce((sum, player) => sum + player.elo, 0) / blueTeamDocs.length : NaN;
-        const averageRedTeamElo = redTeamDocs.length > 0 ? redTeamDocs.reduce((sum, player) => sum + player.elo, 0) / redTeamDocs.length : NaN;
+        const averageBlueTeamElo = blueTeamDocs.reduce((sum, player) => sum + player.elo, 0) / blueTeamDocs.length;
+        const averageRedTeamElo = redTeamDocs.reduce((sum, player) => sum + player.elo, 0) / redTeamDocs.length;
         const averageGameElo = (averageBlueTeamElo + averageRedTeamElo) / 2;
         const teamEloDifference = averageBlueTeamElo - averageRedTeamElo;
         const blueTeamWin = winner === 'Blue Team';
@@ -144,6 +152,7 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
             blueTeam: blueTeamDocs.map(player => player._id),
             redTeam: redTeamDocs.map(player => player._id),
             winner,
+            matchID,
             type: game.name === 'Rocket League' ? '3v3' : '5v5'
         });
         await match.save();

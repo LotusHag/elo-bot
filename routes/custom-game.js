@@ -1,9 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Player = require('../models/player');
+const Game = require('../models/game');
 
-// Enhanced Simulated Annealing function for team balancing
-const simulatedAnnealing = (players, initialTemp, coolingRate) => {
+// Simulated Annealing and other functions
+
+const simulatedAnnealing = (players, initialTemp, coolingRate, roles) => {
     let currentSolution = players.slice();
     let bestSolution = players.slice();
     let currentTemp = initialTemp;
@@ -18,15 +20,11 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
         return player.winStreak > 2 ? player.winStreak * 5 : 0;
     };
 
-    const assignRoles = (players) => {
-        const roles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
-        const roleCounts = {
-            'Top': 0,
-            'Jungle': 0,
-            'Mid': 0,
-            'Bot': 0,
-            'Support': 0
-        };
+    const assignRoles = (players, roles) => {
+        const roleCounts = {};
+        roles.forEach(role => {
+            roleCounts[role] = 0;
+        });
 
         players.forEach(player => {
             if (roles.includes(player.role) && roleCounts[player.role] < 1) {
@@ -37,7 +35,7 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
         });
     };
 
-    const generateNeighbor = (solution) => {
+    const generateNeighbor = (solution, roles) => {
         const newSolution = solution.slice();
         const idx1 = Math.floor(Math.random() * newSolution.length);
         let idx2 = Math.floor(Math.random() * newSolution.length);
@@ -45,8 +43,8 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
             idx2 = Math.floor(Math.random() * newSolution.length);
         }
         [newSolution[idx1], newSolution[idx2]] = [newSolution[idx2], newSolution[idx1]];
-        assignRoles(newSolution.slice(0, 5));
-        assignRoles(newSolution.slice(5));
+        assignRoles(newSolution.slice(0, 5), roles);
+        assignRoles(newSolution.slice(5), roles);
         return newSolution;
     };
 
@@ -58,7 +56,7 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
     };
 
     while (currentTemp > 1) {
-        const newSolution = generateNeighbor(currentSolution);
+        const newSolution = generateNeighbor(currentSolution, roles);
         const team1 = newSolution.slice(0, 5);
         const team2 = newSolution.slice(5);
         const currentEloDiff = calculateEloDifference(currentSolution.slice(0, 5), currentSolution.slice(5));
@@ -95,11 +93,16 @@ const calculatePotentialEloChange = (playerElo, averageEnemyElo, actualScore, kF
 };
 
 // Route to render the custom game setup page
-router.get('/setup', (req, res) => {
-    res.render('custom-game-setup');
+router.get('/setup', async (req, res) => {
+    const game = await Game.findOne({ name: 'League of Legends' }).exec(); // Adjust to get the relevant game
+    const roles = game.roles; // Assuming game.roles contains the roles for this game
+    res.render('custom-game-setup', { roles });
 });
 
 router.post('/create-teams', async (req, res) => {
+    const game = await Game.findOne({ name: 'League of Legends' }).exec(); // Adjust to get the relevant game
+    const roles = game.roles; // Assuming game.roles contains the roles for this game
+
     const players = req.body.players.map(p => ({
         name: p.name.toLowerCase().trim(),
         role: p.role
@@ -127,13 +130,13 @@ router.post('/create-teams', async (req, res) => {
     });
 
     // Apply Simulated Annealing to optimize team balance
-    const optimizedPlayers = simulatedAnnealing(playerDocs, 1000, 0.995);
+    const optimizedPlayers = simulatedAnnealing(playerDocs, 1000, 0.995, roles);
     const team1 = optimizedPlayers.slice(0, 5);
     const team2 = optimizedPlayers.slice(5);
 
     // Ensure full teams with all roles
     const ensureFullTeams = (team) => {
-        const requiredRoles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+        const requiredRoles = roles;
         const assignedRoles = team.map(player => player.role);
 
         requiredRoles.forEach(role => {

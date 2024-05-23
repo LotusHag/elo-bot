@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player Leaderboard</title>
+    <title>Game Leaderboard</title>
     <style>
         body {
             background-color: #01133D;
@@ -68,11 +68,8 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/players/leaderboard">Player Leaderboard</a>
-            <a href="/teams/leaderboard">Team Leaderboard</a>
-            <a href="/players/input">Submit Player Results</a>
-            <a href="/teams/input">Submit Team Results</a>
-            <a href="/custom-game/setup">Create Custom Game</a>
+            <a href="/">Home</a>
+            <a href="/games/<%= game._id %>/input">Submit Game Results</a>
         </div>
         <div>
             <% if (user) { %>
@@ -83,7 +80,7 @@
             <% } %>
         </div>
     </div>
-    <h1>Player Leaderboard</h1>
+    <h1><%= game.name %> Leaderboard</h1>
     <table>
         <thead>
             <tr>

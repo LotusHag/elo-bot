@@ -1,8 +1,19 @@
+// models/game.js
 const mongoose = require('mongoose');
 
-const gameSchema = new mongoose.Schema({
-    name: { type: String, unique: true, required: true },
-    description: { type: String }
+const GameSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
+    category: {
+        type: String,
+        required: true
+    },
+    roles: {
+        type: [String],
+        default: []
+    }
 });
 
-module.exports = mongoose.model('Game', gameSchema);
+module.exports = mongoose.model('Game', GameSchema);
