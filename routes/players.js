@@ -7,18 +7,23 @@ const LeaderboardHistory = require('../models/leaderboardHistory');
 // Helper function to calculate Elo change
 const calculateEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, matchImportance, winStreak, isWinner) => {
     const expectedScore = 1 / (1 + Math.pow(10, (averageEnemyElo - playerElo) / 400));
-    const modifiedActualScore = actualScore === 1 ? actualScore + 0.05 : actualScore - 0.05;
     const winStreakMultiplier = winStreak > 2 ? 1 + (Math.min(winStreak - 2, 3) * 0.035) : 1; // 3.5% per win streak above 2, capped at 5 games
-    let eloChange = matchImportance * kFactor * winStreakMultiplier * (modifiedActualScore - expectedScore);
+    let eloChange = matchImportance * kFactor * winStreakMultiplier * (actualScore - expectedScore);
 
     // Apply the win/loss multiplier
     if (isWinner) {
-        eloChange *= 1.25;
+        eloChange *= 1.3;
     } else {
-        eloChange *= 0.9;
+        eloChange *= 0.85;
     }
 
     return eloChange;
+};
+
+// Function to apply a normally distributed scale factor
+const applyNormalDistribution = (value, scale) => {
+    const cappedValue = Math.min(Math.max(value * scale, -0.75), 0.75);
+    return 1 + cappedValue;
 };
 
 // Helper function to update player stats
@@ -39,18 +44,15 @@ const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageG
     // Calculate Elo change
     let eloChange = calculateEloChange(player.elo, averageEnemyElo, actualScore, adjustedKFactor, matchImportance, winStreak, isWinner);
 
-    // Adjust Elo change based on player's relative position in the game and team difference
-    if (player.elo > averageGameElo) {
-        eloChange *= 0.9; // Player is above average in the game
-    } else if (player.elo < averageGameElo) {
-        eloChange *= 1.1; // Player is below average in the game
-    }
+    // Adjust Elo change based on player's relative position in the game and team difference using a normally distributed scale factor
+    const eloDifferenceScale = 0.0025; // Scaling factor for player Elo difference
+    const teamDifferenceScale = 0.0025; // Scaling factor for team Elo difference
 
-    if (teamEloDifference > 0) {
-        eloChange *= 0.9; // Player's team is stronger
-    } else if (teamEloDifference < 0) {
-        eloChange *= 1.1; // Player's team is weaker
-    }
+    const playerEloScaleFactor = applyNormalDistribution(player.elo - averageGameElo, eloDifferenceScale);
+    const teamEloScaleFactor = applyNormalDistribution(teamEloDifference, teamDifferenceScale);
+
+    eloChange *= playerEloScaleFactor;
+    eloChange *= teamEloScaleFactor;
 
     // Update player stats
     if (isWinner) {

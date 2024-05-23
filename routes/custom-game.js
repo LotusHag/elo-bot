@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Player = require('../models/player');
 
-// Simulated Annealing function for team balancing
+// Enhanced Simulated Annealing function for team balancing
 const simulatedAnnealing = (players, initialTemp, coolingRate) => {
     let currentSolution = players.slice();
     let bestSolution = players.slice();
@@ -14,6 +14,29 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
         return Math.abs(avgElo1 - avgElo2);
     };
 
+    const calculateWinStreakBoost = (player) => {
+        return player.winStreak > 2 ? player.winStreak * 5 : 0;
+    };
+
+    const assignRoles = (players) => {
+        const roles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+        const roleCounts = {
+            'Top': 0,
+            'Jungle': 0,
+            'Mid': 0,
+            'Bot': 0,
+            'Support': 0
+        };
+
+        players.forEach(player => {
+            if (roles.includes(player.role) && roleCounts[player.role] < 1) {
+                roleCounts[player.role]++;
+            } else {
+                player.role = 'Autofill';
+            }
+        });
+    };
+
     const generateNeighbor = (solution) => {
         const newSolution = solution.slice();
         const idx1 = Math.floor(Math.random() * newSolution.length);
@@ -22,6 +45,8 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
             idx2 = Math.floor(Math.random() * newSolution.length);
         }
         [newSolution[idx1], newSolution[idx2]] = [newSolution[idx2], newSolution[idx1]];
+        assignRoles(newSolution.slice(0, 5));
+        assignRoles(newSolution.slice(5));
         return newSolution;
     };
 
@@ -51,6 +76,22 @@ const simulatedAnnealing = (players, initialTemp, coolingRate) => {
     }
 
     return bestSolution;
+};
+
+// Helper function to calculate potential Elo changes
+const calculatePotentialEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, winStreak) => {
+    const expectedScore = 1 / (1 + Math.pow(10, (averageEnemyElo - playerElo) / 400));
+    const winStreakMultiplier = winStreak > 2 ? 1 + (Math.min(winStreak - 2, 3) * 0.035) : 1; // 3.5% per win streak above 2, capped at 5 games
+    let eloChange = kFactor * winStreakMultiplier * (actualScore - expectedScore);
+
+    // Apply the win/loss multiplier
+    if (actualScore === 1) {
+        eloChange *= 1.25;
+    } else {
+        eloChange *= 0.9;
+    }
+
+    return eloChange;
 };
 
 // Route to render the custom game setup page
@@ -97,7 +138,7 @@ router.post('/create-teams', async (req, res) => {
 
         requiredRoles.forEach(role => {
             if (!assignedRoles.includes(role)) {
-                const fillPlayerIndex = team.findIndex(p => p.role === 'Fill');
+                const fillPlayerIndex = team.findIndex(p => p.role === 'Fill' || p.role === 'Autofill');
                 if (fillPlayerIndex >= 0) {
                     team[fillPlayerIndex].role = role;
                     assignedRoles.push(role);
@@ -108,6 +149,19 @@ router.post('/create-teams', async (req, res) => {
 
     ensureFullTeams(team1);
     ensureFullTeams(team2);
+
+    const averageEloTeam1 = team1.reduce((sum, player) => sum + player.elo, 0) / team1.length;
+    const averageEloTeam2 = team2.reduce((sum, player) => sum + player.elo, 0) / team2.length;
+
+    team1.forEach(player => {
+        player.potentialWinGain = calculatePotentialEloChange(player.elo, averageEloTeam2, 1, 24, player.winStreak);
+        player.potentialLoss = calculatePotentialEloChange(player.elo, averageEloTeam2, 0, 24, player.winStreak);
+    });
+
+    team2.forEach(player => {
+        player.potentialWinGain = calculatePotentialEloChange(player.elo, averageEloTeam1, 1, 24, player.winStreak);
+        player.potentialLoss = calculatePotentialEloChange(player.elo, averageEloTeam1, 0, 24, player.winStreak);
+    });
 
     // Render the results
     res.render('custom-game-teams', { team1, team2 });

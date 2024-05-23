@@ -12,6 +12,8 @@
         }
         .nav-container {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
             gap: 10px;
             margin-bottom: 20px;
         }
@@ -51,12 +53,22 @@
 </head>
 <body>
     <div class="nav-container">
-        <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-        <a href="/players/leaderboard">Player Leaderboard</a>
-        <a href="/teams/leaderboard">Team Leaderboard</a>
-        <a href="/players/input">Submit Player Results</a>
-        <a href="/teams/input">Submit Team Results</a>
-        <a href="/custom-game/setup">Create Custom Game</a>
+        <div>
+            <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+            <a href="/players/leaderboard">Player Leaderboard</a>
+            <a href="/teams/leaderboard">Team Leaderboard</a>
+            <a href="/players/input">Submit Player Results</a>
+            <a href="/teams/input">Submit Team Results</a>
+            <a href="/custom-game/setup">Create Custom Game</a>
+        </div>
+        <div>
+            <% if (user) { %>
+                <span>Welcome, <%= user.username %>!</span>
+                <a href="/auth/logout">Logout</a>
+            <% } else { %>
+                <a href="/auth/login">Login</a>
+            <% } %>
+        </div>
     </div>
     <h1>Submit Player Results</h1>
     <div class="form-container">
