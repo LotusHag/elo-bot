@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data for <%= game.name %></title>
+    <title>Input Data for Rocket League</title>
     <style>
         body {
             background-color: #01133D;
@@ -55,7 +55,6 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/profile">Profile</a>
             <a href="/">Home</a>
         </div>
         <div>
@@ -68,20 +67,20 @@
         </div>
     </div>
     <div class="form-container">
-        <h1>Input Data for <%= game.name %></h1>
+        <h1>Input Data for Rocket League</h1>
         <form action="/games/<%= game._id %>/input" method="POST">
             <h2>Blue Team</h2>
-            <input type="text" name="blueTeam[]" placeholder="Player 1 Name" required>
-            <input type="text" name="blueTeam[]" placeholder="Player 2 Name" required>
-            <input type="text" name="blueTeam[]" placeholder="Player 3 Name" required>
+            <input type="text" name="blueTeam[]" placeholder="Player 1">
+            <input type="text" name="blueTeam[]" placeholder="Player 2">
+            <input type="text" name="blueTeam[]" placeholder="Player 3">
             <h2>Red Team</h2>
-            <input type="text" name="redTeam[]" placeholder="Player 1 Name" required>
-            <input type="text" name="redTeam[]" placeholder="Player 2 Name" required>
-            <input type="text" name="redTeam[]" placeholder="Player 3 Name" required>
+            <input type="text" name="redTeam[]" placeholder="Player 1">
+            <input type="text" name="redTeam[]" placeholder="Player 2">
+            <input type="text" name="redTeam[]" placeholder="Player 3">
             <h2>Winner</h2>
-            <select name="winner" required>
-                <option value="blue">Blue Team Wins</option>
-                <option value="red">Red Team Wins</option>
+            <select name="winner">
+                <option value="Blue Team">Blue Team Wins</option>
+                <option value="Red Team">Red Team Wins</option>
             </select>
             <input type="submit" value="Submit">
         </form>

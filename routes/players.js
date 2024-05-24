@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const Player = require('../models/player');
+const PlayerLOL = require('../models/playerLOL');
+const PlayerValo = require('../models/playerValo');
+const PlayerRL = require('../models/playerRL');
+const PlayerTrackmania = require('../models/playerTrackmania');
 const Match = require('../models/match');
 const LeaderboardHistory = require('../models/leaderboardHistory');
 
@@ -27,10 +30,10 @@ const applyNormalDistribution = (value, scale) => {
 };
 
 // Helper function to update player stats
-const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageGameElo, teamEloDifference, winStreak, matchImportance) => {
-    let player = await Player.findOne({ name: new RegExp('^' + playerName + '$', 'i') });
+const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageGameElo, teamEloDifference, winStreak, matchImportance, PlayerModel) => {
+    let player = await PlayerModel.findOne({ name: new RegExp('^' + playerName + '$', 'i') });
     if (!player) {
-        player = new Player({ name: playerName });
+        player = new PlayerModel({ name: playerName });
     }
 
     const actualScore = isWinner ? 1 : 0;
@@ -69,8 +72,8 @@ const updatePlayerStats = async (playerName, isWinner, averageEnemyElo, averageG
 };
 
 // Function to save the current leaderboard state
-const saveCurrentLeaderboardState = async () => {
-    const players = await Player.find().sort({ elo: -1 }).exec();
+const saveCurrentLeaderboardState = async (PlayerModel) => {
+    const players = await PlayerModel.find().sort({ elo: -1 }).exec();
     const timestamp = new Date();
 
     const leaderboardEntries = players.map((player, index) => ({
@@ -93,23 +96,41 @@ router.get('/input', (req, res) => {
 
 // Route to submit player results
 router.post('/input', async (req, res) => {
-    const { blueTeam, redTeam, winner, matchID } = req.body;
+    const { blueTeam, redTeam, winner, matchID, gameName } = req.body;
     const blueTeamNames = blueTeam.map(name => name.trim().toLowerCase());
     const redTeamNames = redTeam.map(name => name.trim().toLowerCase());
+
+    let PlayerModel;
+    switch (gameName) {
+        case 'League of Legends':
+            PlayerModel = PlayerLOL;
+            break;
+        case 'Rocket League':
+            PlayerModel = PlayerRL;
+            break;
+        case 'Valorant':
+            PlayerModel = PlayerValo;
+            break;
+        case 'Trackmania':
+            PlayerModel = PlayerTrackmania;
+            break;
+        default:
+            return res.status(500).send('Unknown game');
+    }
 
     console.log('Blue Team Names:', blueTeamNames);
     console.log('Red Team Names:', redTeamNames);
 
     for (const playerName of [...blueTeamNames, ...redTeamNames]) {
-        let player = await Player.findOne({ name: new RegExp('^' + playerName + '$', 'i') });
+        let player = await PlayerModel.findOne({ name: new RegExp('^' + playerName + '$', 'i') });
         if (!player) {
-            player = new Player({ name: playerName });
+            player = new PlayerModel({ name: playerName });
             await player.save();
         }
     }
 
     const allPlayers = [...blueTeamNames, ...redTeamNames];
-    const playerDocs = await Player.find({ name: { $in: allPlayers.map(name => new RegExp('^' + name + '$', 'i')) } });
+    const playerDocs = await PlayerModel.find({ name: { $in: allPlayers.map(name => new RegExp('^' + name + '$', 'i')) } });
 
     const blueTeamIds = playerDocs.filter(player => blueTeamNames.includes(player.name.toLowerCase())).map(player => player._id);
     const redTeamIds = playerDocs.filter(player => redTeamNames.includes(player.name.toLowerCase())).map(player => player._id);
@@ -135,18 +156,18 @@ router.post('/input', async (req, res) => {
     const blueTeamWin = winner === 'Blue Team';
     const matchImportance = 1; // You can adjust this value or make it dynamic based on the match's importance
 
-    await saveCurrentLeaderboardState(); // Save the current leaderboard state before updating
+    await saveCurrentLeaderboardState(PlayerModel); // Save the current leaderboard state before updating
 
     for (const playerName of blueTeamNames) {
         const player = playerDocs.find(player => player.name.toLowerCase() === playerName.toLowerCase());
         const winStreak = player.winStreak || 0;
-        await updatePlayerStats(playerName, blueTeamWin, averageRedTeamElo, averageGameElo, teamEloDifference, winStreak, matchImportance);
+        await updatePlayerStats(playerName, blueTeamWin, averageRedTeamElo, averageGameElo, teamEloDifference, winStreak, matchImportance, PlayerModel);
     }
 
     for (const playerName of redTeamNames) {
         const player = playerDocs.find(player => player.name.toLowerCase() === playerName.toLowerCase());
         const winStreak = player.winStreak || 0;
-        await updatePlayerStats(playerName, !blueTeamWin, averageBlueTeamElo, averageGameElo, -teamEloDifference, winStreak, matchImportance);
+        await updatePlayerStats(playerName, !blueTeamWin, averageBlueTeamElo, averageGameElo, -teamEloDifference, winStreak, matchImportance, PlayerModel);
     }
 
     const match = new Match({
@@ -165,7 +186,13 @@ router.post('/input', async (req, res) => {
 // Route to display player leaderboard
 router.get('/leaderboard', async (req, res) => {
     try {
-        const players = await Player.find().sort({ elo: -1 }).exec();
+        const playersLOL = await PlayerLOL.find().sort({ elo: -1 }).exec();
+        const playersValo = await PlayerValo.find().sort({ elo: -1 }).exec();
+        const playersRL = await PlayerRL.find().sort({ elo: -1 }).exec();
+        const playersTrackmania = await PlayerTrackmania.find().sort({ elo: -1 }).exec();
+
+        const players = playersLOL.concat(playersValo, playersRL, playersTrackmania);
+
         const previousLeaderboard = await LeaderboardHistory.find().sort({ timestamp: -1 }).limit(players.length).exec();
         res.render('player-leaderboard', { players, previousLeaderboard });
     } catch (error) {

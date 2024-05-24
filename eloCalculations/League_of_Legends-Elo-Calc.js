@@ -1,3 +1,5 @@
+const PlayerLOL = require('../models/playerLOL');
+
 const calculateEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, matchImportance, winStreak, isWinner) => {
     const expectedScore = 1 / (1 + Math.pow(10, (averageEnemyElo - playerElo) / 400));
     const winStreakMultiplier = winStreak > 2 ? 1 + (Math.min(winStreak - 2, 3) * 0.035) : 1;

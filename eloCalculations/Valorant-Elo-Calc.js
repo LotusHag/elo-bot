@@ -1,10 +1,10 @@
-// Valorant-Elo-Calc.js
+const PlayerValo = require('../models/playerValo');
+
 const calculateEloChange = (playerElo, averageEnemyElo, actualScore, kFactor, matchImportance, winStreak, isWinner) => {
     const expectedScore = 1 / (1 + Math.pow(10, (averageEnemyElo - playerElo) / 400));
-    const winStreakMultiplier = winStreak > 2 ? 1 + (Math.min(winStreak - 2, 3) * 0.035) : 1; // 3.5% per win streak above 2, capped at 5 games
+    const winStreakMultiplier = winStreak > 2 ? 1 + (Math.min(winStreak - 2, 3) * 0.035) : 1;
     let eloChange = matchImportance * kFactor * winStreakMultiplier * (actualScore - expectedScore);
 
-    // Apply the win/loss multiplier
     if (isWinner) {
         eloChange *= 1.3;
     } else {
@@ -51,4 +51,4 @@ const updatePlayerStats = async (player, isWinner, averageEnemyElo, averageGameE
     await player.save();
 };
 
-module.exports = { calculateEloChange, applyNormalDistribution, updatePlayerStats };
+module.exports = { updatePlayerStats };

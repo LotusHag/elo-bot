@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data for <%= game.name %></title>
+    <title>Submit Player Results</title>
     <style>
         body {
             background-color: #01133D;
@@ -34,7 +34,7 @@
             width: 400px;
             margin: auto;
         }
-        .form-container input[type="text"], .form-container select, .form-container textarea {
+        .form-container input[type="text"], .form-container select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
@@ -55,8 +55,11 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/profile">Profile</a>
-            <a href="/">Home</a>
+            <a href="/players/leaderboard">Player Leaderboard</a>
+            <a href="/teams/leaderboard">Team Leaderboard</a>
+            <a href="/players/input">Submit Player Results</a>
+            <a href="/teams/input">Submit Team Results</a>
+            <a href="/custom-game/setup">Create Custom Game</a>
         </div>
         <div>
             <% if (user) { %>
@@ -67,34 +70,36 @@
             <% } %>
         </div>
     </div>
+    <h1>Submit Player Results</h1>
     <div class="form-container">
-        <h1>Input Data for <%= game.name %></h1>
-        <form action="/games/<%= game._id %>/input" method="POST">
-            <% if (game.name === 'Trackmania') { %>
-                <input type="text" name="player" placeholder="Player Name" required>
-                <input type="text" name="map" placeholder="Map Name" required>
-                <input type="number" name="time" placeholder="Completion Time (seconds)" required>
-            <% } else if (game.name === 'Smash') { %>
-                <input type="text" name="player1" placeholder="Player 1 Name" required>
-                <input type="text" name="player2" placeholder="Player 2 Name" required>
-                <select name="winner" required>
-                    <option value="player1">Player 1 Wins</option>
-                    <option value="player2">Player 2 Wins</option>
-                </select>
-            <% } else if (game.name === 'Rocket League') { %>
-                <textarea name="players" placeholder="Comma-separated Player Names (3v3)" required></textarea>
-                <select name="winner" required>
-                    <option value="blue">Blue Team Wins</option>
-                    <option value="red">Red Team Wins</option>
-                </select>
-            <% } else { %>
-                <textarea name="players" placeholder="Comma-separated Player Names (5v5)" required></textarea>
-                <select name="winner" required>
-                    <option value="blue">Blue Team Wins</option>
-                    <option value="red">Red Team Wins</option>
-                </select>
-            <% } %>
-            <input type="submit" value="Submit">
+        <form action="/players/input" method="POST">
+            <h2>Blue Team</h2>
+            <input type="text" name="blueTeam[]" placeholder="Player 1">
+            <input type="text" name="blueTeam[]" placeholder="Player 2">
+            <input type="text" name="blueTeam[]" placeholder="Player 3">
+            <input type="text" name="blueTeam[]" placeholder="Player 4">
+            <input type="text" name="blueTeam[]" placeholder="Player 5">
+            <h2>Red Team</h2>
+            <input type="text" name="redTeam[]" placeholder="Player 1">
+            <input type="text" name="redTeam[]" placeholder="Player 2">
+            <input type="text" name="redTeam[]" placeholder="Player 3">
+            <input type="text" name="redTeam[]" placeholder="Player 4">
+            <input type="text" name="redTeam[]" placeholder="Player 5">
+            <h2>Winner</h2>
+            <select name="winner">
+                <option value="Blue Team">Blue Team</option>
+                <option value="Red Team">Red Team</option>
+            </select>
+            <h2>Game Name</h2>
+            <select name="gameName">
+                <option value="League of Legends">League of Legends</option>
+                <option value="Rocket League">Rocket League</option>
+                <option value="Valorant">Valorant</option>
+                <option value="Trackmania">Trackmania</option>
+            </select>
+            <h2>Match ID (Optional)</h2>
+            <input type="text" name="matchID" placeholder="Match ID">
+            <input type="submit" value="Submit Results">
         </form>
     </div>
 </body>

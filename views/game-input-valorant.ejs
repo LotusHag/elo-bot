@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Valorant Game Results</title>
+    <title>Input Data for League of Legends</title>
     <style>
         body {
             background-color: #01133D;
@@ -66,27 +66,27 @@
             <% } %>
         </div>
     </div>
-    <h1>Submit Valorant Game Results</h1>
     <div class="form-container">
+        <h1>Input Data for League of Legends</h1>
         <form action="/games/<%= game._id %>/input" method="POST">
-            <h2>Team 1</h2>
-            <input type="text" name="blueTeam[]" placeholder="Player 1" required>
-            <input type="text" name="blueTeam[]" placeholder="Player 2" required>
-            <input type="text" name="blueTeam[]" placeholder="Player 3" required>
-            <input type="text" name="blueTeam[]" placeholder="Player 4" required>
-            <input type="text" name="blueTeam[]" placeholder="Player 5" required>
-            <h2>Team 2</h2>
-            <input type="text" name="redTeam[]" placeholder="Player 1" required>
-            <input type="text" name="redTeam[]" placeholder="Player 2" required>
-            <input type="text" name="redTeam[]" placeholder="Player 3" required>
-            <input type="text" name="redTeam[]" placeholder="Player 4" required>
-            <input type="text" name="redTeam[]" placeholder="Player 5" required>
+            <h2>Blue Team</h2>
+            <input type="text" name="blueTeam[]" placeholder="Player 1">
+            <input type="text" name="blueTeam[]" placeholder="Player 2">
+            <input type="text" name="blueTeam[]" placeholder="Player 3">
+            <input type="text" name="blueTeam[]" placeholder="Player 4">
+            <input type="text" name="blueTeam[]" placeholder="Player 5">
+            <h2>Red Team</h2>
+            <input type="text" name="redTeam[]" placeholder="Player 1">
+            <input type="text" name="redTeam[]" placeholder="Player 2">
+            <input type="text" name="redTeam[]" placeholder="Player 3">
+            <input type="text" name="redTeam[]" placeholder="Player 4">
+            <input type="text" name="redTeam[]" placeholder="Player 5">
             <h2>Winner</h2>
-            <select name="winner" required>
-                <option value="Blue Team">Team 1 Wins</option>
-                <option value="Red Team">Team 2 Wins</option>
+            <select name="winner">
+                <option value="Blue Team">Blue Team Wins</option>
+                <option value="Red Team">Red Team Wins</option>
             </select>
-            <input type="submit" value="Submit Results">
+            <input type="submit" value="Submit">
         </form>
     </div>
 </body>
