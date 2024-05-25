@@ -7,7 +7,7 @@ const PlayerRL = require('../models/playerRL');
 const PlayerTrackmania = require('../models/playerTrackmania');
 const Speedrun = require('../models/speedrun');
 const LeaderboardHistory = require('../models/leaderboardHistory');
-const Match = require('../models/match');  // Import the Match model
+const Match = require('../models/match');
 const { ensureAuthenticated } = require('../config/auth');
 const path = require('path');
 
@@ -98,20 +98,20 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
 
     if (game.category === 'Speedrun') {
         const { player, gameCategory, map, time } = req.body;
-        let playerDoc = await PlayerModel.findOne({ name: player, game: gameId }).exec();
+        let playerDoc = await PlayerModel.findOne({ name: player.toLowerCase(), game: gameId }).exec();
         if (!playerDoc) {
-            playerDoc = new PlayerModel({ name: player, game: gameId });
+            playerDoc = new PlayerModel({ name: player.toLowerCase(), game: gameId });
             await playerDoc.save();
         }
         const record = new Speedrun({ player: playerDoc._id, gameCategory, map, time });
         await record.save();
     } else if (game.name === 'Smash') {
         const { player1, player2, winner } = req.body;
-        let player1Doc = await PlayerModel.findOne({ name: player1, game: gameId }).exec();
-        let player2Doc = await PlayerModel.findOne({ name: player2, game: gameId }).exec();
+        let player1Doc = await PlayerModel.findOne({ name: player1.toLowerCase(), game: gameId }).exec();
+        let player2Doc = await PlayerModel.findOne({ name: player2.toLowerCase(), game: gameId }).exec();
 
-        if (!player1Doc) player1Doc = new PlayerModel({ name: player1, game: gameId });
-        if (!player2Doc) player2Doc = new PlayerModel({ name: player2, game: gameId });
+        if (!player1Doc) player1Doc = new PlayerModel({ name: player1.toLowerCase(), game: gameId });
+        if (!player2Doc) player2Doc = new PlayerModel({ name: player2.toLowerCase(), game: gameId });
 
         await updatePlayerStats(player1Doc, winner === 'player1', player2Doc.elo, (player1Doc.elo + player2Doc.elo) / 2, 0, player1Doc.winStreak, 1);
         await updatePlayerStats(player2Doc, winner === 'player2', player1Doc.elo, (player1Doc.elo + player2Doc.elo) / 2, 0, player2Doc.winStreak, 1);
@@ -185,7 +185,7 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
 
         if (blueTeamWin) {
             for (const player of blueTeamDocs) {
-                await updatePlayerStats(player, true, averageRedTeamElo, averageGameElo, -teamEloDifference, player.winStreak, 1); // Fix teamEloDifference sign
+                await updatePlayerStats(player, true, averageRedTeamElo, averageGameElo, -teamEloDifference, player.winStreak, 1);
                 console.log(`Blue Team Player: ${player.name}, New Elo: ${player.elo}`);
             }
             for (const player of redTeamDocs) {
@@ -194,7 +194,7 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
             }
         } else {
             for (const player of redTeamDocs) {
-                await updatePlayerStats(player, true, averageBlueTeamElo, averageGameElo, -teamEloDifference, player.winStreak, 1); // Fix teamEloDifference sign
+                await updatePlayerStats(player, true, averageBlueTeamElo, averageGameElo, -teamEloDifference, player.winStreak, 1);
                 console.log(`Red Team Player: ${player.name}, New Elo: ${player.elo}`);
             }
             for (const player of blueTeamDocs) {
@@ -277,10 +277,12 @@ router.post('/:gameId/custom-game', ensureAuthenticated, async (req, res) => {
             return res.status(500).send('Unknown game');
     }
 
-    let playerDocs = await PlayerModel.find({ name: { $in: players.map(name => name.toLowerCase()) }, game: gameId }).exec();
+    // Convert player names to lowercase immediately
+    const lowercasedPlayers = players.map(player => player.toLowerCase());
+
+    let playerDocs = await PlayerModel.find({ name: { $in: lowercasedPlayers }, game: gameId }).exec();
     const existingPlayers = new Set(playerDocs.map(player => player.name));
-    for (let playerName of players) {
-        playerName = playerName.toLowerCase();
+    for (let playerName of lowercasedPlayers) {
         if (!existingPlayers.has(playerName)) {
             const newPlayer = new PlayerModel({ name: playerName, game: gameId });
             await newPlayer.save();
@@ -288,72 +290,119 @@ router.post('/:gameId/custom-game', ensureAuthenticated, async (req, res) => {
         }
     }
 
-    // Logic for team balancing and role assignment
-    let blueTeam = [];
-    let redTeam = [];
-
     if (game.name === 'League of Legends') {
-        // Assign roles and balance teams based on Elo and roles
-        const rolesMap = {};
-        for (let i = 0; i < players.length; i++) {
-            rolesMap[players[i].toLowerCase()] = roles[i];
-        }
-
-        // Sort players by Elo
-        playerDocs.sort((a, b) => a.elo - b.elo);
-
-        // Semi-randomly assign players to teams and roles
-        const rolesOrder = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
-        let roleIndex = 0;
-
-        for (const player of playerDocs) {
-            const preferredRole = rolesMap[player.name];
-            const role = preferredRole && preferredRole !== 'Fill' ? preferredRole : rolesOrder[roleIndex];
-            roleIndex = (roleIndex + 1) % rolesOrder.length;
-
-            const playerWithRole = { name: player.name, elo: player.elo, role };
-            if (blueTeam.length < 5) {
-                blueTeam.push(playerWithRole);
-            } else {
-                redTeam.push(playerWithRole);
-            }
-        }
-
-        // Balance the teams by Elo
-        while (Math.abs(getAverageElo(blueTeam) - getAverageElo(redTeam)) > 50) {
-            let blueTeamPlayer = blueTeam.pop();
-            let redTeamPlayer = redTeam.pop();
-
-            blueTeam.push(redTeamPlayer);
-            redTeam.push(blueTeamPlayer);
-        }
-    } else if (game.name === 'Valorant' || game.name === 'Rocket League') {
-        // Sort players by Elo and semi-randomly assign to teams
-        playerDocs.sort((a, b) => a.elo - b.elo);
-        playerDocs.forEach((player, index) => {
-            if (index % 2 === 0) {
-                blueTeam.push(player);
-            } else {
-                redTeam.push(player);
-            }
+        // Assign roles for League of Legends
+        playerDocs.forEach(player => {
+            const role = roles[players.indexOf(player.name)];
+            player.role = role;
         });
     }
 
-    // Save match details
-    const match = new Match({
-        blueTeam: blueTeam.map(player => player._id),
-        redTeam: redTeam.map(player => player._id),
-        winner,
-        type: game.name === 'Rocket League' ? '3v3' : '5v5'
-    });
-    await match.save();
+    // Enhanced Simulated Annealing function for team balancing
+    const simulatedAnnealing = (players, initialTemp, coolingRate) => {
+        let currentSolution = players.slice();
+        let bestSolution = players.slice();
+        let currentTemp = initialTemp;
 
-    // Redirect to a new page displaying the teams
-    res.render('game-custom-result', { game, blueTeam, redTeam });
+        const calculateEloDifference = (team1, team2) => {
+            const avgElo1 = team1.reduce((sum, p) => sum + p.elo, 0) / team1.length;
+            const avgElo2 = team2.reduce((sum, p) => sum + p.elo, 0) / team2.length;
+            return Math.abs(avgElo1 - avgElo2);
+        };
+
+        const assignRoles = (players) => {
+            const roles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+            const roleCounts = {
+                'Top': 0,
+                'Jungle': 0,
+                'Mid': 0,
+                'Bot': 0,
+                'Support': 0
+            };
+
+            players.forEach(player => {
+                if (roles.includes(player.role) && roleCounts[player.role] < 1) {
+                    roleCounts[player.role]++;
+                } else {
+                    player.role = 'Autofill';
+                }
+            });
+        };
+
+        const generateNeighbor = (solution) => {
+            const newSolution = solution.slice();
+            const idx1 = Math.floor(Math.random() * newSolution.length);
+            let idx2 = Math.floor(Math.random() * newSolution.length);
+            while (idx1 === idx2) {
+                idx2 = Math.floor(Math.random() * newSolution.length);
+            }
+            [newSolution[idx1], newSolution[idx2]] = [newSolution[idx2], newSolution[idx1]];
+            if (game.name === 'League of Legends') {
+                assignRoles(newSolution.slice(0, 5));
+                assignRoles(newSolution.slice(5));
+            }
+            return newSolution;
+        };
+
+        const acceptanceProbability = (currentEloDiff, newEloDiff, temp) => {
+            if (newEloDiff < currentEloDiff) {
+                return 1.0;
+            }
+            return Math.exp((currentEloDiff - newEloDiff) / temp);
+        };
+
+        while (currentTemp > 1) {
+            const newSolution = generateNeighbor(currentSolution);
+            const team1 = game.name === 'Rocket League' ? newSolution.slice(0, 3) : newSolution.slice(0, 5);
+            const team2 = game.name === 'Rocket League' ? newSolution.slice(3, 6) : newSolution.slice(5);
+            const currentEloDiff = calculateEloDifference(currentSolution.slice(0, team1.length), currentSolution.slice(team1.length));
+            const newEloDiff = calculateEloDifference(team1, team2);
+
+            if (acceptanceProbability(currentEloDiff, newEloDiff, currentTemp) > Math.random()) {
+                currentSolution = newSolution.slice();
+            }
+
+            if (newEloDiff < calculateEloDifference(bestSolution.slice(0, team1.length), bestSolution.slice(team1.length))) {
+                bestSolution = newSolution.slice();
+            }
+
+            currentTemp *= coolingRate;
+        }
+
+        return bestSolution;
+    };
+
+    // Apply Simulated Annealing to optimize team balance
+    const optimizedPlayers = simulatedAnnealing(playerDocs, 1000, 0.995);
+    const blueTeam = game.name === 'Rocket League' ? optimizedPlayers.slice(0, 3) : optimizedPlayers.slice(0, 5);
+    const redTeam = game.name === 'Rocket League' ? optimizedPlayers.slice(3, 6) : optimizedPlayers.slice(5);
+
+    if (game.name === 'League of Legends') {
+        // Ensure full teams with all roles
+        const ensureFullTeams = (team) => {
+            const requiredRoles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+            const assignedRoles = team.map(player => player.role);
+
+            requiredRoles.forEach(role => {
+                if (!assignedRoles.includes(role)) {
+                    const fillPlayerIndex = team.findIndex(p => p.role === 'Fill' || p.role === 'Autofill');
+                    if (fillPlayerIndex >= 0) {
+                        team[fillPlayerIndex].role = role;
+                        assignedRoles.push(role);
+                    }
+                }
+            });
+        };
+
+        ensureFullTeams(blueTeam);
+        ensureFullTeams(redTeam);
+    }
+
+    const averageEloBlueTeam = blueTeam.reduce((sum, player) => sum + player.elo, 0) / blueTeam.length;
+    const averageEloRedTeam = redTeam.reduce((sum, player) => sum + player.elo, 0) / redTeam.length;
+
+    // Render the results
+    res.render('game-custom-result', { game, blueTeam, redTeam, averageEloBlueTeam, averageEloRedTeam });
 });
-
-function getAverageElo(team) {
-    return team.reduce((sum, player) => sum + player.elo, 0) / team.length;
-}
 
 module.exports = router;

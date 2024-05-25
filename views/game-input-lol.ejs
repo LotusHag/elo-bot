@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data for League of Legends</title>
+    <title>Submit Game Results - League of Legends</title>
     <style>
         body {
             background-color: #01133D;
@@ -31,13 +31,12 @@
             background-color: #333;
             padding: 20px;
             border-radius: 5px;
-            width: 400px;
+            width: 80%;
             margin: auto;
+            margin-top: 50px;
         }
         .form-container input[type="text"], .form-container select {
-            width: calc(100% - 20px);
             padding: 10px;
-            margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
@@ -49,6 +48,19 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .player-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .player-row input[type="text"] {
+            width: 20%;
+            margin-right: 5px;
+        }
+        .player-row select {
+            width: 10%;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +68,8 @@
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
             <a href="/">Home</a>
+            <a href="/games/<%= game._id %>">Leaderboard</a>
+            <a href="/games/<%= game._id %>/custom-game">Create Another Custom Game</a>
         </div>
         <div>
             <% if (user) { %>
@@ -67,27 +81,40 @@
         </div>
     </div>
     <div class="form-container">
-        <h1>Input Data for League of Legends</h1>
+        <h1>Submit Game Results - League of Legends</h1>
         <form action="/games/<%= game._id %>/input" method="POST">
-            <input type="hidden" name="gameName" value="<%= game.name %>">
             <h2>Blue Team</h2>
-            <input type="text" name="blueTeam[]" placeholder="Player 1">
-            <input type="text" name="blueTeam[]" placeholder="Player 2">
-            <input type="text" name="blueTeam[]" placeholder="Player 3">
-            <input type="text" name="blueTeam[]" placeholder="Player 4">
-            <input type="text" name="blueTeam[]" placeholder="Player 5">
+            <% for (let i = 1; i <= 5; i++) { %>
+                <div class="player-row">
+                    <input type="text" name="blueTeam[]" placeholder="Player <%= i %>" required>
+                    <select name="roles[]">
+                        <option value="Top">Top</option>
+                        <option value="Jungle">Jungle</option>
+                        <option value="Mid">Mid</option>
+                        <option value="Bot">Bot</option>
+                        <option value="Support">Support</option>
+                    </select>
+                </div>
+            <% } %>
             <h2>Red Team</h2>
-            <input type="text" name="redTeam[]" placeholder="Player 1">
-            <input type="text" name="redTeam[]" placeholder="Player 2">
-            <input type="text" name="redTeam[]" placeholder="Player 3">
-            <input type="text" name="redTeam[]" placeholder="Player 4">
-            <input type="text" name="redTeam[]" placeholder="Player 5">
+            <% for (let i = 1; i <= 5; i++) { %>
+                <div class="player-row">
+                    <input type="text" name="redTeam[]" placeholder="Player <%= i %>" required>
+                    <select name="roles[]">
+                        <option value="Top">Top</option>
+                        <option value="Jungle">Jungle</option>
+                        <option value="Mid">Mid</option>
+                        <option value="Bot">Bot</option>
+                        <option value="Support">Support</option>
+                    </select>
+                </div>
+            <% } %>
             <h2>Winner</h2>
-            <select name="winner">
-                <option value="Blue Team">Blue Team Wins</option>
-                <option value="Red Team">Red Team Wins</option>
+            <select name="winner" required>
+                <option value="Blue Team">Blue Team</option>
+                <option value="Red Team">Red Team</option>
             </select>
-            <input type="submit" value="Submit">
+            <input type="submit" value="Submit Results">
         </form>
     </div>
 </body>

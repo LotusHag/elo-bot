@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data for Rocket League</title>
+    <title>Submit Game Results - Rocket League</title>
     <style>
         body {
             background-color: #01133D;
@@ -31,13 +31,12 @@
             background-color: #333;
             padding: 20px;
             border-radius: 5px;
-            width: 400px;
+            width: 80%;
             margin: auto;
+            margin-top: 50px;
         }
         .form-container input[type="text"], .form-container select {
-            width: calc(100% - 20px);
             padding: 10px;
-            margin-bottom: 10px;
             border: none;
             border-radius: 5px;
         }
@@ -49,6 +48,22 @@
             border-radius: 5px;
             cursor: pointer;
         }
+        .team-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .team-container div {
+            width: 45%;
+        }
+        .player-input {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .player-input input[type="text"] {
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -56,6 +71,8 @@
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
             <a href="/">Home</a>
+            <a href="/games/<%= game._id %>">Leaderboard</a>
+            <a href="/games/<%= game._id %>/custom-game">Create Another Custom Game</a>
         </div>
         <div>
             <% if (user) { %>
@@ -67,22 +84,34 @@
         </div>
     </div>
     <div class="form-container">
-        <h1>Input Data for Rocket League</h1>
+        <h1>Submit Game Results - Rocket League</h1>
         <form action="/games/<%= game._id %>/input" method="POST">
-            <h2>Blue Team</h2>
-            <input type="text" name="blueTeam[]" placeholder="Player 1">
-            <input type="text" name="blueTeam[]" placeholder="Player 2">
-            <input type="text" name="blueTeam[]" placeholder="Player 3">
-            <h2>Red Team</h2>
-            <input type="text" name="redTeam[]" placeholder="Player 1">
-            <input type="text" name="redTeam[]" placeholder="Player 2">
-            <input type="text" name="redTeam[]" placeholder="Player 3">
-            <h2>Winner</h2>
-            <select name="winner">
-                <option value="Blue Team">Blue Team Wins</option>
-                <option value="Red Team">Red Team Wins</option>
-            </select>
-            <input type="submit" value="Submit">
+            <div class="team-container">
+                <div>
+                    <h2>Blue Team</h2>
+                    <% for (let i = 1; i <= 3; i++) { %>
+                        <div class="player-input">
+                            <input type="text" name="blueTeam[]" placeholder="Player <%= i %>" required>
+                        </div>
+                    <% } %>
+                </div>
+                <div>
+                    <h2>Red Team</h2>
+                    <% for (let i = 1; i <= 3; i++) { %>
+                        <div class="player-input">
+                            <input type="text" name="redTeam[]" placeholder="Player <%= i %>" required>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+            <div>
+                <h2>Winner</h2>
+                <select name="winner">
+                    <option value="Blue Team">Blue Team</option>
+                    <option value="Red Team">Red Team</option>
+                </select>
+                <input type="submit" value="Submit Results">
+            </div>
         </form>
     </div>
 </body>
