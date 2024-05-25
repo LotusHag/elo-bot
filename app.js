@@ -37,14 +37,12 @@ app.set('views', path.join(__dirname, 'views'));
 
 const indexRouter = require('./routes/index');
 const playersRouter = require('./routes/players');
-const customGameRouter = require('./routes/custom-game');
 const authRouter = require('./routes/auth');
 const profileRouter = require('./routes/profile');
 const gamesRouter = require('./routes/games');
 
 app.use('/', indexRouter);
 app.use('/players', playersRouter);
-app.use('/custom-game', customGameRouter);
 app.use('/auth', authRouter);
 app.use('/profile', profileRouter);
 app.use('/games', gamesRouter);
