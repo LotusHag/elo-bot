@@ -1,3 +1,4 @@
+// scripts/populateGames.js
 const mongoose = require('mongoose');
 const Game = require('../models/game'); // Correct path to your Game model
 

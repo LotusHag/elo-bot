@@ -4,8 +4,6 @@ const Game = require('../models/game');
 const PlayerLOL = require('../models/playerLOL');
 const PlayerValo = require('../models/playerValo');
 const PlayerRL = require('../models/playerRL');
-const PlayerTrackmania = require('../models/playerTrackmania');
-const Speedrun = require('../models/speedrun');
 const LeaderboardHistory = require('../models/leaderboardHistory');
 const Match = require('../models/match');
 const { ensureAuthenticated } = require('../config/auth');
@@ -25,40 +23,28 @@ function loadEloCalculationModule(gameName) {
 router.get('/:gameId', ensureAuthenticated, async (req, res) => {
     const gameId = req.params.gameId;
     const game = await Game.findById(gameId).exec();
-    if (game.category === 'Speedrun') {
-        const records = await Speedrun.find().populate('player').sort({ time: 1 }).exec();
-        res.render('game-leaderboard-speedrunning', { game, records });
-    } else if (game.name === 'Trackmania') {
-        const maps = await Map.find({ game: gameId }).populate({
-            path: 'leaderboard.player',
-            select: 'name'
-        }).exec();
-        res.render('game-leaderboard-trackmania', { game, maps });
-    } else {
-        let players;
-        switch (game.name) {
-            case 'League of Legends':
-                players = await PlayerLOL.find({ game: gameId }).sort({ elo: -1 }).exec();
-                break;
-            case 'Rocket League':
-                players = await PlayerRL.find({ game: gameId }).sort({ elo: -1 }).exec();
-                break;
-            case 'Valorant':
-                players = await PlayerValo.find({ game: gameId }).sort({ elo: -1 }).exec();
-                break;
-            default:
-                return res.status(500).send('Unknown game');
-        }
-        const previousLeaderboard = await LeaderboardHistory.find({ game: gameId }).sort({ timestamp: -1 }).limit(players.length).exec();
-        res.render('game-leaderboard', { game, players, previousLeaderboard });
+
+    let players;
+    switch (game.name) {
+        case 'League of Legends':
+            players = await PlayerLOL.find({ game: gameId }).sort({ elo: -1 }).exec();
+            break;
+        case 'Rocket League':
+            players = await PlayerRL.find({ game: gameId }).sort({ elo: -1 }).exec();
+            break;
+        case 'Valorant':
+            players = await PlayerValo.find({ game: gameId }).sort({ elo: -1 }).exec();
+            break;
+        default:
+            return res.status(500).send('Unknown game');
     }
+    const previousLeaderboard = await LeaderboardHistory.find({ game: gameId }).sort({ timestamp: -1 }).limit(players.length).exec();
+    res.render('game-leaderboard', { game, players, previousLeaderboard });
 });
 
 router.get('/:gameId/input', ensureAuthenticated, async (req, res) => {
     const game = await Game.findById(req.params.gameId).exec();
-    if (game.category === 'Speedrun') {
-        res.render('game-input-speedrun', { game });
-    } else if (game.name === 'Smash') {
+    if (game.name === 'Smash') {
         res.render('game-input-1v1', { game });
     } else if (game.name === 'Rocket League') {
         res.render('game-input-rocketleague', { game });
@@ -92,23 +78,11 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
         case 'Valorant':
             PlayerModel = PlayerValo;
             break;
-        case 'Trackmania':
-            PlayerModel = PlayerTrackmania;
-            break;
         default:
             return res.status(500).send('Unknown game');
     }
 
-    if (game.category === 'Speedrun') {
-        const { player, gameCategory, map, time } = req.body;
-        let playerDoc = await PlayerModel.findOne({ name: player.toLowerCase(), game: gameId }).exec();
-        if (!playerDoc) {
-            playerDoc = new PlayerModel({ name: player.toLowerCase(), game: gameId });
-            await playerDoc.save();
-        }
-        const record = new Speedrun({ player: playerDoc._id, gameCategory, map, time });
-        await record.save();
-    } else if (game.name === 'Smash') {
+    if (game.name === 'Smash') {
         const { player1, player2, winner } = req.body;
         let player1Doc = await PlayerModel.findOne({ name: player1.toLowerCase(), game: gameId }).exec();
         let player2Doc = await PlayerModel.findOne({ name: player2.toLowerCase(), game: gameId }).exec();
@@ -230,9 +204,6 @@ async function saveCurrentLeaderboardState(gameId) {
             break;
         case 'Valorant':
             players = await PlayerValo.find({ game: gameId }).sort({ elo: -1 }).exec();
-            break;
-        case 'Trackmania':
-            players = await PlayerTrackmania.find({ game: gameId }).sort({ elo: -1 }).exec();
             break;
         default:
             return;

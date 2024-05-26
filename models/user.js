@@ -1,4 +1,3 @@
-// models/user.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -13,7 +12,7 @@ const userSchema = new mongoose.Schema({
     playerModel: {
         type: String,
         required: true,
-        enum: ['PlayerLOL', 'PlayerValo', 'PlayerRL', 'PlayerTrackmania']
+        enum: ['PlayerLOL', 'PlayerValo', 'PlayerRL']
     },
     role: { type: String, enum: ['user', 'general admin', 'head admin'], default: 'user' }
 });

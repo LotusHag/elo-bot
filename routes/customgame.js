@@ -1,11 +1,9 @@
-// routes/customGame.js
 const express = require('express');
 const router = express.Router();
 const Game = require('../models/game');
 const PlayerLOL = require('../models/playerLOL');
 const PlayerValo = require('../models/playerValo');
 const PlayerRL = require('../models/playerRL');
-const PlayerTrackmania = require('../models/playerTrackmania');
 const { ensureAuthenticated } = require('../config/auth');
 
 router.get('/setup', ensureAuthenticated, async (req, res) => {
@@ -40,9 +38,6 @@ router.post('/setup/:gameId', ensureAuthenticated, async (req, res) => {
         case 'Valorant':
             PlayerModel = PlayerValo;
             break;
-        case 'Trackmania':
-            PlayerModel = PlayerTrackmania;
-            break;
         default:
             return res.status(500).send('Unknown game');
     }
@@ -67,10 +62,6 @@ router.post('/setup/:gameId', ensureAuthenticated, async (req, res) => {
 
     const blueTeamDocs = await processTeam(blueTeam, roles?.blueTeam);
     const redTeamDocs = await processTeam(redTeam, roles?.redTeam);
-
-    // Handle ELO calculations and match recording as per your existing logic
-    // ...
-
     res.redirect(`/games/${gameId}`);
 });
 

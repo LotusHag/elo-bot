@@ -3,7 +3,6 @@ const router = express.Router();
 const PlayerLOL = require('../models/playerLOL');
 const PlayerValo = require('../models/playerValo');
 const PlayerRL = require('../models/playerRL');
-const PlayerTrackmania = require('../models/PlayerTrackmania');
 const Match = require('../models/match');
 const LeaderboardHistory = require('../models/leaderboardHistory');
 
@@ -111,9 +110,6 @@ router.post('/input', async (req, res) => {
         case 'Valorant':
             PlayerModel = PlayerValo;
             break;
-        case 'Trackmania':
-            PlayerModel = PlayerTrackmania;
-            break;
         default:
             return res.status(500).send('Unknown game');
     }
@@ -189,9 +185,8 @@ router.get('/leaderboard', async (req, res) => {
         const playersLOL = await PlayerLOL.find().sort({ elo: -1 }).exec();
         const playersValo = await PlayerValo.find().sort({ elo: -1 }).exec();
         const playersRL = await PlayerRL.find().sort({ elo: -1 }).exec();
-        const playersTrackmania = await PlayerTrackmania.find().sort({ elo: -1 }).exec();
 
-        const players = playersLOL.concat(playersValo, playersRL, playersTrackmania);
+        const players = playersLOL.concat(playersValo, playersRL);
 
         const previousLeaderboard = await LeaderboardHistory.find().sort({ timestamp: -1 }).limit(players.length).exec();
         res.render('player-leaderboard', { players, previousLeaderboard });

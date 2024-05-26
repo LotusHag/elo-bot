@@ -1,4 +1,3 @@
-// app.js
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -10,8 +9,6 @@ const passport = require('./config/passport');
 const PlayerLOL = require('./models/playerLOL');
 const PlayerValo = require('./models/playerValo');
 const PlayerRL = require('./models/playerRL');
-const PlayerTrackmania = require('./models/PlayerTrackmania');
-const TrackmaniaMap = require('./models/trackmaniaMap');
 
 const app = express();
 const PORT = 3001;

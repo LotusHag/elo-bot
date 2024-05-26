@@ -1,23 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const { ensureAdmin } = require('../config/auth');
-const Speedrun = require('../models/speedrun');
 
-router.get('/verify', ensureAdmin, async (req, res) => {
-    const unverifiedRuns = await Speedrun.find({ verified: false }).populate('player map').exec();
-    res.render('verify-runs', { unverifiedRuns });
+// File made in preperation for the fact that we might need admins to verify some inputted data
+
+router.get('/verify', ensureAdmin, (req, res) => {
+    res.send('No content to verify');
 });
 
-router.post('/verify', ensureAdmin, async (req, res) => {
-    const { action, runId } = req.body;
-
-    if (action === 'approve') {
-        await Speedrun.findByIdAndUpdate(runId, { verified: true }).exec();
-    } else if (action === 'delete') {
-        await Speedrun.findByIdAndDelete(runId).exec();
-    }
-
-    res.redirect('/verify');
+router.post('/verify', ensureAdmin, (req, res) => {
+    res.send('No content to verify');
 });
 
 module.exports = router;

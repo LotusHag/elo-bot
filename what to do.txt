@@ -14,3 +14,20 @@
 	- have a verification page where admins can verify all unverified runs or have them deleted
 	- redesign the datapoints so it works with the concepts above, this includes a new datapoint named trackmania maps within which we put all maps that you can log.
 		-- these maps should have a name and a status, with the status being if they are in the active or inactive map pool
+5. Security
+	- Login
+	- Logout
+	- See who is logged in currently
+	- Login screen go back
+	- How to recover account.
+	- What are the changes when you have an account, what permissions do what?
+	- Data Tracking:
+		-- Amount of logins
+		-- Amount of games put into the database
+		-- Every game that is input should be tracked by which user it was done.
+		-- Every user should have certain accounts attached to them.
+		   But only admins should be able to combine these accounts.
+		   If someone puts a name into the submit player results it should then also be tracked.
+		   If that name is part of a user and if so should be attributed to that user instead of the player.
+		   (so if a player name is claimed it now belongs to that player, this also results in the merging of all those accounts.)
+6. add a user section

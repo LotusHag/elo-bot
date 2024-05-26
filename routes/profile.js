@@ -1,18 +1,15 @@
-// routes/profile.js
 const express = require('express');
 const router = express.Router();
 const User = require('../models/user');
 const PlayerLOL = require('../models/playerLOL');
 const PlayerValo = require('../models/playerValo');
 const PlayerRL = require('../models/playerRL');
-const PlayerTrackmania = require('../models/PlayerTrackmania');
 const { ensureAuthenticated } = require('../config/auth');
 
 const playerModels = {
     'PlayerLOL': PlayerLOL,
     'PlayerValo': PlayerValo,
-    'PlayerRL': PlayerRL,
-    'PlayerTrackmania': PlayerTrackmania
+    'PlayerRL': PlayerRL
 };
 
 router.get('/', ensureAuthenticated, async (req, res) => {
