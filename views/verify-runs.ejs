@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= game.name %> Leaderboard</title>
+    <title>Verify Trackmania Runs</title>
     <style>
         body {
             background-color: #01133D;
@@ -41,15 +41,16 @@
         th {
             background-color: #333;
         }
+        form {
+            display: inline;
+        }
     </style>
 </head>
 <body>
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/profile">Profile</a>
             <a href="/">Home</a>
-            <a href="/games/<%= game._id %>/input">Input Data</a>
         </div>
         <div>
             <% if (user) { %>
@@ -60,25 +61,36 @@
             <% } %>
         </div>
     </div>
-    <h1><%= game.name %> Leaderboard</h1>
+    <h1>Verify Trackmania Runs</h1>
     <table>
         <thead>
             <tr>
-                <th>Rank</th>
                 <th>Player</th>
                 <th>Map</th>
-                <th>Time (seconds)</th>
+                <th>Time</th>
                 <th>Date</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
-            <% records.forEach((record, index) => { %>
+            <% unverifiedRuns.forEach(run => { %>
                 <tr>
-                    <td><%= index + 1 %></td>
-                    <td><%= record.player.name %></td>
-                    <td><%= record.map %></td>
-                    <td><%= record.time %></td>
-                    <td><%= record.date.toISOString().split('T')[0] %></td>
+                    <td><%= run.player.name %></td>
+                    <td><%= run.map.name %></td>
+                    <td><%= (run.time / 60000).toFixed(0) %>:<%= ((run.time % 60000) / 1000).toFixed(0) %>:<%= (run.time % 1000) %></td>
+                    <td><%= run.date.toISOString().split('T')[0] %></td>
+                    <td>
+                        <form action="/verify" method="POST">
+                            <input type="hidden" name="runId" value="<%= run._id %>">
+                            <input type="hidden" name="action" value="approve">
+                            <input type="submit" value="Approve">
+                        </form>
+                        <form action="/verify" method="POST">
+                            <input type="hidden" name="runId" value="<%= run._id %>">
+                            <input type="hidden" name="action" value="delete">
+                            <input type="submit" value="Delete">
+                        </form>
+                    </td>
                 </tr>
             <% }) %>
         </tbody>

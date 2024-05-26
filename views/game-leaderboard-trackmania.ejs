@@ -1,10 +1,9 @@
-<!-- views/profile.ejs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
+    <title>Trackmania Leaderboard</title>
     <style>
         body {
             background-color: #01133D;
@@ -28,26 +27,8 @@
         .nav-container a:hover {
             background-color: #555;
         }
-        .profile-container {
-            background-color: #333;
-            padding: 20px;
-            border-radius: 5px;
-            width: 400px;
-            margin: auto;
-        }
-        .profile-container h2 {
-            text-align: center;
-        }
-        .profile-container ul {
-            list-style: none;
-            padding: 0;
-        }
-        .profile-container li {
-            padding: 10px 0;
-            border-bottom: 1px solid #555;
-        }
-        .profile-container .role {
-            color: #4CAF50;
+        .content-container {
+            margin: 20px;
         }
     </style>
 </head>
@@ -66,19 +47,8 @@
             <% } %>
         </div>
     </div>
-    <div class="profile-container">
-        <h2><%= user.username %>'s Profile</h2>
-        <p class="role">Role: <%= user.role %></p>
-        <h3>Linked Player Accounts:</h3>
-        <ul>
-            <% players.forEach(player => { %>
-                <li>
-                    <strong><%= player.name %></strong> - <%= player.game.name %><br>
-                    Elo: <%= player.elo %><br>
-                    Wins: <%= player.wins %>, Losses: <%= player.losses %>, Win Streak: <%= player.winStreak %>
-                </li>
-            <% }) %>
-        </ul>
+    <div class="content-container">
+        <!-- Placeholder for content -->
     </div>
 </body>
 </html>

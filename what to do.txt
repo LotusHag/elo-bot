@@ -1,0 +1,16 @@
+1. Users with differing permissions.
+2. Users should have all accounts that are in the database linked to their account.
+3. Profile should show all of this correctly
+4. Trackmania implementation
+	- Have the trackmania button lead to game-leaderboard-trackmania.ejs
+	- redesign the trackmania leaderboard
+		-- Should have small boxes with a leaderboard per map.
+		-- Should show the top 10 players per leaderboard but you should be able to scroll
+		-- Should show the map at the top of the leaderboard then show the player the time and if the time has been approved below.
+		-- Should only show the five fastest time of any specific player.
+	- redesign the input
+		-- you should be able to choose from a selection box with a drop down menu a map to input your score for.
+		-- you should be able to input your score in minutes, seconds, miliseconds
+	- have a verification page where admins can verify all unverified runs or have them deleted
+	- redesign the datapoints so it works with the concepts above, this includes a new datapoint named trackmania maps within which we put all maps that you can log.
+		-- these maps should have a name and a status, with the status being if they are in the active or inactive map pool

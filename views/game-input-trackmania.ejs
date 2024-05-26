@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Data for <%= game.name %></title>
+    <title>Submit Trackmania Run</title>
     <style>
         body {
             background-color: #01133D;
@@ -34,7 +34,7 @@
             width: 400px;
             margin: auto;
         }
-        .form-container input[type="text"], .form-container input[type="number"] {
+        .form-container select, .form-container input[type="text"] {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
@@ -55,7 +55,6 @@
     <div class="nav-container">
         <div>
             <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
-            <a href="/profile">Profile</a>
             <a href="/">Home</a>
         </div>
         <div>
@@ -68,11 +67,16 @@
         </div>
     </div>
     <div class="form-container">
-        <h1>Input Data for <%= game.name %></h1>
+        <h1>Submit Trackmania Run</h1>
         <form action="/games/<%= game._id %>/input" method="POST">
-            <input type="text" name="player" placeholder="Player Name" required>
-            <input type="text" name="map" placeholder="Map Name" required>
-            <input type="number" name="time" placeholder="Completion Time (seconds)" required>
+            <select name="map" required>
+                <% maps.forEach(map => { %>
+                    <option value="<%= map._id %>"><%= map.name %></option>
+                <% }) %>
+            </select>
+            <input type="text" name="minutes" placeholder="Minutes" required>
+            <input type="text" name="seconds" placeholder="Seconds" required>
+            <input type="text" name="milliseconds" placeholder="Milliseconds" required>
             <input type="submit" value="Submit">
         </form>
     </div>

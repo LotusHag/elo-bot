@@ -28,6 +28,12 @@ router.get('/:gameId', ensureAuthenticated, async (req, res) => {
     if (game.category === 'Speedrun') {
         const records = await Speedrun.find().populate('player').sort({ time: 1 }).exec();
         res.render('game-leaderboard-speedrunning', { game, records });
+    } else if (game.name === 'Trackmania') {
+        const maps = await Map.find({ game: gameId }).populate({
+            path: 'leaderboard.player',
+            select: 'name'
+        }).exec();
+        res.render('game-leaderboard-trackmania', { game, maps });
     } else {
         let players;
         switch (game.name) {
@@ -39,9 +45,6 @@ router.get('/:gameId', ensureAuthenticated, async (req, res) => {
                 break;
             case 'Valorant':
                 players = await PlayerValo.find({ game: gameId }).sort({ elo: -1 }).exec();
-                break;
-            case 'Trackmania':
-                players = await PlayerTrackmania.find({ game: gameId }).sort({ elo: -1 }).exec();
                 break;
             default:
                 return res.status(500).send('Unknown game');

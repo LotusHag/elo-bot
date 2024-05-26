@@ -12,4 +12,4 @@ const PlayerTrackmaniaSchema = new Schema({
 
 PlayerTrackmaniaSchema.index({ name: 1, game: 1 }, { unique: true });
 
-module.exports = mongoose.model('PlayerTrackmania', PlayerTrackmaniaSchema);
+module.exports = mongoose.models.PlayerTrackmania || mongoose.model('PlayerTrackmania', PlayerTrackmaniaSchema);

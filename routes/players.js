@@ -3,7 +3,7 @@ const router = express.Router();
 const PlayerLOL = require('../models/playerLOL');
 const PlayerValo = require('../models/playerValo');
 const PlayerRL = require('../models/playerRL');
-const PlayerTrackmania = require('../models/playerTrackmania');
+const PlayerTrackmania = require('../models/PlayerTrackmania');
 const Match = require('../models/match');
 const LeaderboardHistory = require('../models/leaderboardHistory');
 

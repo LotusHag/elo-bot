@@ -1,10 +1,21 @@
+// models/user.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    playerIds: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Player' }]
+    playerIds: [{
+        _id: false,
+        refPath: 'playerModel',
+        type: mongoose.Schema.Types.ObjectId
+    }],
+    playerModel: {
+        type: String,
+        required: true,
+        enum: ['PlayerLOL', 'PlayerValo', 'PlayerRL', 'PlayerTrackmania']
+    },
+    role: { type: String, enum: ['user', 'general admin', 'head admin'], default: 'user' }
 });
 
 userSchema.methods.validPassword = function(password) {
@@ -18,5 +29,5 @@ userSchema.pre('save', function(next) {
     }
     next();
 });
-4
+
 module.exports = mongoose.model('User', userSchema);
