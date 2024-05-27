@@ -18,7 +18,7 @@
             margin: auto;
             margin-top: 50px;
         }
-        .form-container input[type="text"], .form-container input[type="password"] {
+        .form-container input[type="text"], .form-container input[type="password"], .form-container select {
             width: calc(100% - 20px);
             padding: 10px;
             margin-bottom: 10px;
@@ -41,6 +41,11 @@
         <form action="/auth/register" method="POST">
             <input type="text" name="username" placeholder="Username" required>
             <input type="password" name="password" placeholder="Password" required>
+            <select name="playerModel" required>
+                <option value="PlayerLOL">League of Legends</option>
+                <option value="PlayerValo">Valorant</option>
+                <option value="PlayerRL">Rocket League</option>
+            </select>
             <input type="submit" value="Register">
         </form>
     </div>

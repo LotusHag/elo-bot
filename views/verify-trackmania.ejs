@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Trackmania Runs</title>
+    <style>
+        body {
+            background-color: #01133D;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-container a {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            text-decoration: none;
+            color: white;
+        }
+        .nav-container a:hover {
+            background-color: #555;
+        }
+        .run-container {
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .run-container form {
+            display: flex;
+            justify-content: space-between;
+        }
+        .run-container span {
+            flex: 1;
+        }
+        .run-container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .run-container button.delete {
+            background-color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-container">
+        <div>
+            <img src="/images/logo.png" alt="Logo" style="height: 50px; margin-right: 10px;">
+            <a href="/">Home</a>
+            <a href="/trackmania/leaderboard">Leaderboard</a>
+        </div>
+        <div>
+            <% if (user) { %>
+                <span>Welcome, <%= user.username %>!</span>
+                <a href="/auth/logout">Logout</a>
+            <% } else { %>
+                <a href="/auth/login">Login</a>
+            <% } %>
+        </div>
+    </div>
+    <h1>Verify Trackmania Runs</h1>
+    <% unverifiedRuns.forEach(run => { %>
+        <div class="run-container">
+            <span>Player: <%= run.player.name %></span>
+            <span>Map: <%= run.map.name %></span>
+            <span>Time: <%= new Date(run.time).toISOString().substr(14, 9) %></span>
+            <form action="/trackmania/verify/<%= run._id %>" method="POST">
+                <input type="hidden" name="action" value="approve">
+                <button type="submit">Approve</button>
+            </form>
+            <form action="/trackmania/verify/<%= run._id %>" method="POST">
+                <input type="hidden" name="action" value="delete">
+                <button type="submit" class="delete">Delete</button>
+            </form>
+        </div>
+    <% }) %>
+</body>
+</html>

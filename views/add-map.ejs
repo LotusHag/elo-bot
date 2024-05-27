@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Trackmania Map</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body>
+    <h1>Add Trackmania Map</h1>
+    <form action="/maps/add" method="post">
+        <label for="name">Map Name:</label>
+        <input type="text" name="name" id="name" required>
+        <br>
+        <label for="status">Status:</label>
+        <select name="status" id="status">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+        <br>
+        <button type="submit">Add Map</button>
+    </form>
+</body>
+</html>

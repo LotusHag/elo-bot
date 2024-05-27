@@ -14,6 +14,7 @@
 	- have a verification page where admins can verify all unverified runs or have them deleted
 	- redesign the datapoints so it works with the concepts above, this includes a new datapoint named trackmania maps within which we put all maps that you can log.
 		-- these maps should have a name and a status, with the status being if they are in the active or inactive map pool
+	- a function similiar to how we add games to the database to be able to add maps to the pool
 5. Security
 	- Login
 	- Logout

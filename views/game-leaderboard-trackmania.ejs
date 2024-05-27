@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trackmania Leaderboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c3e50;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 80%;
+            margin: auto;
+            overflow: hidden;
+        }
+        h1 {
+            text-align: center;
+            padding: 20px 0;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px 0;
+            background-color: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .leaderboard-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+        }
+        .leaderboard-box {
+            background-color: #34495e;
+            color: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            width: 30%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .leaderboard-box h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .leaderboard-box ul {
+            list-style: none;
+            padding: 0;
+        }
+        .leaderboard-box ul li {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Trackmania Leaderboard</h1>
+        <div style="text-align: center;">
+            <a class="btn" href="/games/<%= game._id %>/input">Submit New Score</a>
+            <a class="btn" href="/games/<%= game._id %>/verify">Verify Runs</a>
+        </div>
+        <div class="leaderboard-container">
+            <% maps.forEach(map => { %>
+                <div class="leaderboard-box">
+                    <h2><%= map.name %></h2>
+                    <ul>
+                        <% map.players.forEach(player => { %>
+                            <li><%= player.name %>: <%= player.time %> <%= player.isApproved ? '(Approved)' : '(Pending)' %></li>
+                        <% }) %>
+                    </ul>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+</body>
+</html>

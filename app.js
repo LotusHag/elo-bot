@@ -9,6 +9,7 @@ const passport = require('./config/passport');
 const PlayerLOL = require('./models/playerLOL');
 const PlayerValo = require('./models/playerValo');
 const PlayerRL = require('./models/playerRL');
+const PlayerTrackmania = require('./models/playerTrackmania');
 
 const app = express();
 const PORT = 3001;
@@ -46,14 +47,16 @@ const playersRouter = require('./routes/players');
 const authRouter = require('./routes/auth');
 const profileRouter = require('./routes/profile');
 const gamesRouter = require('./routes/games');
-const verifyRouter = require('./routes/verify'); // new route
+const mapsRouter = require('./routes/maps');  // Corrected import for maps route
+const verifyRouter = require('./routes/verify');
 
 app.use('/', indexRouter);
 app.use('/players', playersRouter);
 app.use('/auth', authRouter);
 app.use('/profile', profileRouter);
 app.use('/games', gamesRouter);
-app.use('/verify', verifyRouter); // new route
+app.use('/maps', mapsRouter);  // Corrected usage for maps route
+app.use('/verify', verifyRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

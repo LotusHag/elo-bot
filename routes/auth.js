@@ -1,4 +1,3 @@
-// routes/auth.js
 const express = require('express');
 const router = express.Router();
 const passport = require('passport');
@@ -9,9 +8,9 @@ router.get('/register', (req, res) => {
 });
 
 router.post('/register', async (req, res) => {
-    const { username, password, role } = req.body;
+    const { username, password, role, playerModel } = req.body;
     try {
-        const newUser = new User({ username, password, role });
+        const newUser = new User({ username, password, role, playerModel });
         await newUser.save();
         res.redirect('/auth/login');
     } catch (err) {

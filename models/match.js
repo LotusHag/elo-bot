@@ -7,7 +7,7 @@ const matchSchema = new mongoose.Schema({
     redTeam: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Player' }],
     winner: String,
     matchID: String,
-    type: String // "individual", "team", "3v3"
+    type: String // "individual", "team", "3v3", "Speedrunning"
 });
 
 module.exports = mongoose.model('Match', matchSchema);
