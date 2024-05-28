@@ -76,6 +76,7 @@
             <% if (userRole === 'general admin' || userRole === 'head admin') { %>
                 <a class="btn" href="/games/<%= game._id %>/verify">Verify Runs</a>
             <% } %>
+            <a class="btn" href="/">Home</a>
         </div>
         <div class="leaderboard-container">
             <% maps.forEach(map => { %>

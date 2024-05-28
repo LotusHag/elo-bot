@@ -26,10 +26,11 @@ function loadEloCalculationModule(gameName) {
 router.get('/:gameId', ensureAuthenticated, async (req, res) => {
     const gameId = req.params.gameId;
     const game = await Game.findById(gameId).exec();
+    const userRole = req.user.role;
 
     if (game.name === 'Trackmania') {
         const maps = await TrackmaniaMap.find({}).exec();
-        res.render('game-leaderboard-trackmania', { game, maps, userRole: req.user.role });
+        res.render('game-leaderboard-trackmania', { game, maps, userRole });
     } else {
         let players;
         switch (game.name) {
@@ -289,7 +290,7 @@ router.get('/:gameId/verify', ensureAuthenticated, async (req, res) => {
     const gameId = req.params.gameId;
     const game = await Game.findById(gameId).exec();
     if (game.name === 'Trackmania') {
-        const unverifiedRuns = await TrackmaniaRun.find({ verified: false }).populate('player').exec();
+        const unverifiedRuns = await TrackmaniaRun.find({ verified: false }).populate('player').populate('map').exec();
         res.render('verify-runs', { game, runs: unverifiedRuns });
     } else {
         res.status(400).send('Verification not required for this game');
@@ -306,11 +307,11 @@ router.post('/:gameId/verify', ensureAuthenticated, async (req, res) => {
 
         if (action === 'approve') {
             run.verified = true;
+            await run.save();
         } else if (action === 'delete') {
-            await run.remove();
+            await TrackmaniaRun.deleteOne({ _id: runId });
         }
 
-        await run.save();
         res.redirect(`/games/${gameId}/verify`);
     } else {
         res.status(400).send('Verification not required for this game');
@@ -331,7 +332,7 @@ router.get('/trackmania/leaderboard/:mapId/:type', ensureAuthenticated, async (r
         query = { ...query, verified: true };
     }
 
-    const runs = await TrackmaniaRun.find(query).populate('player').sort(sort).exec();
+    const runs = await TrackmaniaRun.find(query).populate('player').populate('map').sort(sort).exec();
 
     let playerRuns = {};
     runs.forEach(run => {
