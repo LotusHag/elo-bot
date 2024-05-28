@@ -47,6 +47,7 @@
             border-radius: 0.5rem;
             width: 30%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
         }
         .leaderboard-box h2 {
             margin-top: 0;
@@ -59,6 +60,12 @@
         .leaderboard-box ul li {
             margin-bottom: 0.5rem;
         }
+        .leaderboard-box .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
     </style>
 </head>
 <body>
@@ -66,20 +73,53 @@
         <h1>Trackmania Leaderboard</h1>
         <div style="text-align: center;">
             <a class="btn" href="/games/<%= game._id %>/input">Submit New Score</a>
-            <a class="btn" href="/games/<%= game._id %>/verify">Verify Runs</a>
+            <% if (userRole === 'general admin' || userRole === 'head admin') { %>
+                <a class="btn" href="/games/<%= game._id %>/verify">Verify Runs</a>
+            <% } %>
         </div>
         <div class="leaderboard-container">
             <% maps.forEach(map => { %>
-                <div class="leaderboard-box">
+                <div class="leaderboard-box" id="leaderboard-<%= map._id %>">
                     <h2><%= map.name %></h2>
-                    <ul>
-                        <% map.players.forEach(player => { %>
-                            <li><%= player.name %>: <%= player.time %> <%= player.isApproved ? '(Approved)' : '(Pending)' %></li>
-                        <% }) %>
-                    </ul>
+                    <div class="btn-group">
+                        <button class="btn" onclick="loadLeaderboard('<%= map._id %>', 'default')">Default</button>
+                        <button class="btn" onclick="loadLeaderboard('<%= map._id %>', 'verified')">Verified</button>
+                        <button class="btn" onclick="loadLeaderboard('<%= map._id %>', 'unverified')">Unverified</button>
+                    </div>
+                    <ul></ul>
                 </div>
             <% }) %>
         </div>
     </div>
+    <script>
+        async function loadLeaderboard(mapId, type) {
+            const response = await fetch(`/games/trackmania/leaderboard/${mapId}/${type}`);
+            const data = await response.json();
+
+            const leaderboardBox = document.getElementById(`leaderboard-${mapId}`);
+            const ul = leaderboardBox.querySelector('ul');
+            ul.innerHTML = '';
+
+            data.forEach(player => {
+                const li = document.createElement('li');
+                const time = new Date(player.time).toISOString().slice(14, 23);
+                li.innerHTML = `
+                    ${player.isApproved ? '✔' : '❌'} 
+                    ${player.playerName} 
+                    ${time}
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        // Load default leaderboards on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const mapElements = document.querySelectorAll('.leaderboard-box');
+            mapElements.forEach(mapElement => {
+                const mapId = mapElement.id.split('-')[1];
+                loadLeaderboard(mapId, 'default');
+            });
+        });
+    </script>
 </body>
 </html>

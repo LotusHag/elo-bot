@@ -6,6 +6,7 @@ const PlayerValo = require('../models/playerValo');
 const PlayerRL = require('../models/playerRL');
 const PlayerTrackmania = require('../models/playerTrackmania');
 const TrackmaniaMap = require('../models/trackmaniaMap');
+const TrackmaniaRun = require('../models/trackmaniaRun');
 const LeaderboardHistory = require('../models/leaderboardHistory');
 const Match = require('../models/match');
 const { ensureAuthenticated } = require('../config/auth');
@@ -28,24 +29,7 @@ router.get('/:gameId', ensureAuthenticated, async (req, res) => {
 
     if (game.name === 'Trackmania') {
         const maps = await TrackmaniaMap.find({}).exec();
-        const players = await PlayerTrackmania.find({ game: gameId, isApproved: true }).sort({ time: 1 }).exec();
-
-        const mapPlayerData = maps.map(map => {
-            const mapPlayers = players
-                .filter(player => player.map === map.name)
-                .slice(0, 10)
-                .map(player => ({
-                    name: player.name,
-                    time: player.time,
-                    isApproved: player.isApproved
-                }));
-            return {
-                name: map.name,
-                players: mapPlayers
-            };
-        });
-
-        res.render('game-leaderboard-trackmania', { game, maps: mapPlayerData });
+        res.render('game-leaderboard-trackmania', { game, maps, userRole: req.user.role });
     } else {
         let players;
         switch (game.name) {
@@ -126,16 +110,20 @@ router.post('/:gameId/input', ensureAuthenticated, async (req, res) => {
             return res.status(400).send('Invalid time calculation');
         }
         
-        let playerDoc = await PlayerModel.findOne({ name: player.toLowerCase(), game: gameId, map: map }).exec();
+        let playerDoc = await PlayerModel.findOne({ name: player.toLowerCase(), game: gameId }).exec();
 
-        if (!playerDoc) playerDoc = new PlayerModel({ name: player.toLowerCase(), game: gameId, map: map });
+        if (!playerDoc) playerDoc = new PlayerModel({ name: player.toLowerCase(), game: gameId });
 
-        playerDoc.time = totalTime;
-        playerDoc.isApproved = false;
+        const newRun = new TrackmaniaRun({
+            player: playerDoc._id,
+            map: map,
+            time: totalTime,
+            verified: false
+        });
 
-        await playerDoc.save();
+        await newRun.save();
 
-        console.log(`Player: ${playerDoc.name}, Time: ${playerDoc.time}, Map: ${playerDoc.map}`);
+        console.log(`Player: ${playerDoc.name}, Time: ${totalTime}, Map: ${map}`);
     } else if (game.name === 'Smash') {
         const { player1, player2, winner } = req.body;
         let player1Doc = await PlayerModel.findOne({ name: player1.toLowerCase(), game: gameId }).exec();
@@ -260,7 +248,7 @@ async function saveCurrentLeaderboardState(gameId) {
             players = await PlayerValo.find({ game: gameId }).sort({ elo: -1 }).exec();
             break;
         case 'Trackmania':
-            players = await PlayerTrackmania.find({ game: gameId }).sort({ time: 1 }).exec();
+            players = await TrackmaniaRun.find({}).populate('player').sort({ time: 1 }).exec();
             break;
         default:
             return;
@@ -269,7 +257,7 @@ async function saveCurrentLeaderboardState(gameId) {
     const timestamp = new Date();
 
     const leaderboardEntries = players.map((player, index) => ({
-        playerId: player._id,
+        playerId: player.player ? player.player._id : player._id,
         game: gameId,
         elo: player.elo,
         rank: index + 1,
@@ -301,8 +289,8 @@ router.get('/:gameId/verify', ensureAuthenticated, async (req, res) => {
     const gameId = req.params.gameId;
     const game = await Game.findById(gameId).exec();
     if (game.name === 'Trackmania') {
-        const unverifiedRuns = await PlayerTrackmania.find({ game: gameId, isApproved: false }).exec();
-        res.render('verify-runs', { game, unverifiedRuns });
+        const unverifiedRuns = await TrackmaniaRun.find({ verified: false }).populate('player').exec();
+        res.render('verify-runs', { game, runs: unverifiedRuns });
     } else {
         res.status(400).send('Verification not required for this game');
     }
@@ -314,10 +302,10 @@ router.post('/:gameId/verify', ensureAuthenticated, async (req, res) => {
     const game = await Game.findById(gameId).exec();
 
     if (game.name === 'Trackmania') {
-        const run = await PlayerTrackmania.findById(runId).exec();
+        const run = await TrackmaniaRun.findById(runId).exec();
 
         if (action === 'approve') {
-            run.isApproved = true;
+            run.verified = true;
         } else if (action === 'delete') {
             await run.remove();
         }
@@ -327,6 +315,201 @@ router.post('/:gameId/verify', ensureAuthenticated, async (req, res) => {
     } else {
         res.status(400).send('Verification not required for this game');
     }
+});
+
+router.get('/trackmania/leaderboard/:mapId/:type', ensureAuthenticated, async (req, res) => {
+    const { mapId, type } = req.params;
+
+    let query = { map: mapId };
+    let sort = { time: 1 };
+
+    if (type === 'verified') {
+        query = { ...query, verified: true };
+    } else if (type === 'unverified') {
+        // No additional filters needed
+    } else {
+        query = { ...query, verified: true };
+    }
+
+    const runs = await TrackmaniaRun.find(query).populate('player').sort(sort).exec();
+
+    let playerRuns = {};
+    runs.forEach(run => {
+        if (!playerRuns[run.player.name]) {
+            playerRuns[run.player.name] = [];
+        }
+        playerRuns[run.player.name].push(run);
+    });
+
+    let leaderboard = [];
+    for (let player in playerRuns) {
+        const playerRun = playerRuns[player];
+        if (type === 'default') {
+            leaderboard.push(playerRun[0]); // Only top run per player
+        } else {
+            leaderboard = leaderboard.concat(playerRun.slice(0, 5)); // Top 5 runs per player
+        }
+    }
+
+    res.json(leaderboard.map(run => ({
+        playerName: run.player.name,
+        time: run.time,
+        isApproved: run.verified
+    })));
+});
+
+// Custom game creation pages and handlers
+router.get('/:gameId/custom-game', ensureAuthenticated, async (req, res) => {
+    const game = await Game.findById(req.params.gameId).exec();
+    res.render('game-custom-create', { game });
+});
+
+router.post('/:gameId/custom-game', ensureAuthenticated, async (req, res) => {
+    const gameId = req.params.gameId;
+    const game = await Game.findById(gameId).exec();
+    const { players, roles, winner } = req.body;
+
+    let PlayerModel;
+    switch (game.name) {
+        case 'League of Legends':
+            PlayerModel = PlayerLOL;
+            break;
+        case 'Rocket League':
+            PlayerModel = PlayerRL;
+            break;
+        case 'Valorant':
+            PlayerModel = PlayerValo;
+            break;
+        default:
+            return res.status(500).send('Unknown game');
+    }
+
+    // Convert player names to lowercase immediately
+    const lowercasedPlayers = players.map(player => player.toLowerCase());
+
+    let playerDocs = await PlayerModel.find({ name: { $in: lowercasedPlayers }, game: gameId }).exec();
+    const existingPlayers = new Set(playerDocs.map(player => player.name));
+    for (let playerName of lowercasedPlayers) {
+        if (!existingPlayers.has(playerName)) {
+            const newPlayer = new PlayerModel({ name: playerName, game: gameId });
+            await newPlayer.save();
+            playerDocs.push(newPlayer);
+        }
+    }
+
+    if (game.name === 'League of Legends') {
+        // Assign roles for League of Legends
+        playerDocs.forEach(player => {
+            const role = roles[players.indexOf(player.name)];
+            player.role = role;
+        });
+    }
+
+    // Enhanced Simulated Annealing function for team balancing
+    const simulatedAnnealing = (players, initialTemp, coolingRate) => {
+        let currentSolution = players.slice();
+        let bestSolution = players.slice();
+        let currentTemp = initialTemp;
+
+        const calculateEloDifference = (team1, team2) => {
+            const avgElo1 = team1.reduce((sum, p) => sum + p.elo, 0) / team1.length;
+            const avgElo2 = team2.reduce((sum, p) => sum + p.elo, 0) / team2.length;
+            return Math.abs(avgElo1 - avgElo2);
+        };
+
+        const assignRoles = (players) => {
+            const roles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+            const roleCounts = {
+                'Top': 0,
+                'Jungle': 0,
+                'Mid': 0,
+                'Bot': 0,
+                'Support': 0
+            };
+
+            players.forEach(player => {
+                if (roles.includes(player.role) && roleCounts[player.role] < 1) {
+                    roleCounts[player.role]++;
+                } else {
+                    player.role = 'Autofill';
+                }
+            });
+        };
+
+        const generateNeighbor = (solution) => {
+            const newSolution = solution.slice();
+            const idx1 = Math.floor(Math.random() * newSolution.length);
+            let idx2 = Math.floor(Math.random() * newSolution.length);
+            while (idx1 === idx2) {
+                idx2 = Math.floor(Math.random() * newSolution.length);
+            }
+            [newSolution[idx1], newSolution[idx2]] = [newSolution[idx2], newSolution[idx1]];
+            if (game.name === 'League of Legends') {
+                assignRoles(newSolution.slice(0, 5));
+                assignRoles(newSolution.slice(5));
+            }
+            return newSolution;
+        };
+
+        const acceptanceProbability = (currentEloDiff, newEloDiff, temp) => {
+            if (newEloDiff < currentEloDiff) {
+                return 1.0;
+            }
+            return Math.exp((currentEloDiff - newEloDiff) / temp);
+        };
+
+        while (currentTemp > 1) {
+            const newSolution = generateNeighbor(currentSolution);
+            const team1 = game.name === 'Rocket League' ? newSolution.slice(0, 3) : newSolution.slice(0, 5);
+            const team2 = game.name === 'Rocket League' ? newSolution.slice(3, 6) : newSolution.slice(5);
+            const currentEloDiff = calculateEloDifference(currentSolution.slice(0, team1.length), currentSolution.slice(team1.length));
+            const newEloDiff = calculateEloDifference(team1, team2);
+
+            if (acceptanceProbability(currentEloDiff, newEloDiff, currentTemp) > Math.random()) {
+                currentSolution = newSolution.slice();
+            }
+
+            if (newEloDiff < calculateEloDifference(bestSolution.slice(0, team1.length), bestSolution.slice(team1.length))) {
+                bestSolution = newSolution.slice();
+            }
+
+            currentTemp *= coolingRate;
+        }
+
+        return bestSolution;
+    };
+
+    // Apply Simulated Annealing to optimize team balance
+    const optimizedPlayers = simulatedAnnealing(playerDocs, 1000, 0.995);
+    const blueTeam = game.name === 'Rocket League' ? optimizedPlayers.slice(0, 3) : optimizedPlayers.slice(0, 5);
+    const redTeam = game.name === 'Rocket League' ? optimizedPlayers.slice(3, 6) : optimizedPlayers.slice(5);
+
+    if (game.name === 'League of Legends') {
+        // Ensure full teams with all roles
+        const ensureFullTeams = (team) => {
+            const requiredRoles = ['Top', 'Jungle', 'Mid', 'Bot', 'Support'];
+            const assignedRoles = team.map(player => player.role);
+
+            requiredRoles.forEach(role => {
+                if (!assignedRoles.includes(role)) {
+                    const fillPlayerIndex = team.findIndex(p => p.role === 'Fill' || p.role === 'Autofill');
+                    if (fillPlayerIndex >= 0) {
+                        team[fillPlayerIndex].role = role;
+                        assignedRoles.push(role);
+                    }
+                }
+            });
+        };
+
+        ensureFullTeams(blueTeam);
+        ensureFullTeams(redTeam);
+    }
+
+    const averageEloBlueTeam = blueTeam.reduce((sum, player) => sum + player.elo, 0) / blueTeam.length;
+    const averageEloRedTeam = redTeam.reduce((sum, player) => sum + player.elo, 0) / redTeam.length;
+
+    // Render the results
+    res.render('game-custom-result', { game, blueTeam, redTeam, averageEloBlueTeam, averageEloRedTeam });
 });
 
 module.exports = router;

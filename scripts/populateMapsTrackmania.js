@@ -12,22 +12,13 @@ mongoose.connect('mongodb://localhost:27017/eloDB', {
 
 const maps = [
     {
-        name: '2020 Summer 05',
+        name: '2021 Summer 24',
         status: 'active'
-    },
-    {
-        name: 'Map 2',
-        status: 'active'
-    },
-    {
-        name: 'Map 3',
-        status: 'inactive'
     }
 ];
 
 async function populateMaps() {
     try {
-        await TrackmaniaMap.deleteMany({});
         await TrackmaniaMap.insertMany(maps);
         console.log('Maps populated successfully');
     } catch (error) {

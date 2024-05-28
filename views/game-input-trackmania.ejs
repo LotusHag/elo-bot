@@ -55,7 +55,7 @@
                 <label for="map">Map</label>
                 <select id="map" name="map" required>
                     <% maps.forEach(map => { %>
-                        <option value="<%= map.name %>"><%= map.name %></option>
+                        <option value="<%= map._id %>"><%= map.name %></option>
                     <% }); %>
                 </select>
             </div>

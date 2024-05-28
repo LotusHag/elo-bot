@@ -16,6 +16,7 @@
 		-- these maps should have a name and a status, with the status being if they are in the active or inactive map pool
 	- a function similiar to how we add games to the database to be able to add maps to the pool
 5. Security
+	- VERY IMPORTANT TO REMOVE THE GAME FROM THE USER DATAPOINT AND REMOVE IT FROM THE REGISTRATIONP
 	- Login
 	- Logout
 	- See who is logged in currently
