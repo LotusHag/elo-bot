@@ -5,6 +5,16 @@ const TrackmaniaRun = require('../models/trackmaniaRun');
 const PlayerTrackmania = require('../models/playerTrackmania');
 const TrackmaniaMap = require('../models/trackmaniaMap');
 
+// Function to find or create a player
+async function findOrCreatePlayer(playerName) {
+    let player = await PlayerTrackmania.findOne({ name: playerName.toLowerCase() }).exec();
+    if (!player) {
+        player = new PlayerTrackmania({ name: playerName.toLowerCase() });
+        await player.save();
+    }
+    return player;
+}
+
 router.get('/leaderboard/:mapId/:type', async (req, res) => {
     try {
         const mapId = req.params.mapId;
@@ -104,6 +114,34 @@ router.post('/verify-runs/delete/:id', async (req, res) => {
         res.redirect('/trackmania/verify-runs');
     } catch (err) {
         console.error('Error deleting run:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+// Endpoint for submitting a Trackmania run
+router.post('/submit-run', async (req, res) => {
+    try {
+        const { player, map, minutes, seconds, milliseconds } = req.body;
+
+        // Calculate the total time in milliseconds
+        const time = (parseInt(minutes) * 60000) + (parseInt(seconds) * 1000) + parseInt(milliseconds);
+
+        // Find or create the player
+        const playerDoc = await findOrCreatePlayer(player);
+
+        // Create and save the new run
+        const newRun = new TrackmaniaRun({
+            player: playerDoc._id,
+            map: map,
+            time: time,
+            verified: false
+        });
+
+        await newRun.save();
+
+        res.redirect('/trackmania/verify-runs');
+    } catch (err) {
+        console.error('Error submitting run:', err);
         res.status(500).json({ message: 'Internal server error' });
     }
 });
