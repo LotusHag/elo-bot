@@ -13,13 +13,22 @@
             padding: 0;
         }
         .container {
-            width: 80%;
+            display: flex;
+            width: 100%;
             margin: auto;
             overflow: hidden;
         }
-        h1 {
+        .left-column {
+            width: 33%;
+            padding: 20px;
+            border-right: 1px solid #ccc;
+        }
+        .right-column {
+            width: 67%;
+            padding: 20px;
+        }
+        h1, h2, h3 {
             text-align: center;
-            padding: 20px 0;
         }
         .btn {
             display: inline-block;
@@ -30,28 +39,22 @@
             text-decoration: none;
             border-radius: 5px;
             text-align: center;
+            cursor: pointer;
         }
         .btn:hover {
             background-color: #2980b9;
         }
         .leaderboard-container {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 1rem;
-            justify-content: center;
         }
         .leaderboard-box {
             background-color: #34495e;
             color: white;
             padding: 1rem;
             border-radius: 0.5rem;
-            width: 30%;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-            position: relative;
-        }
-        .leaderboard-box h2 {
-            margin-top: 0;
-            text-align: center;
         }
         .leaderboard-box ul {
             list-style: none;
@@ -63,38 +66,63 @@
         .leaderboard-box .btn-group {
             display: flex;
             justify-content: center;
-            gap: 5px;
             margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Trackmania Leaderboard</h1>
-        <div style="text-align: center;">
-            <a class="btn" href="/games/<%= game._id %>/input">Submit New Score</a>
-            <% if (userRole === 'general admin' || userRole === 'head admin') { %>
-                <a class="btn" href="/games/<%= game._id %>/verify">Verify Runs</a>
-            <% } %>
-            <a class="btn" href="/">Home</a>
+        <div class="left-column">
+            <h2>Total ELO Leaderboard</h2>
+            <ul id="total-elo-leaderboard">
+                <% if (typeof totalEloLeaderboard !== 'undefined' && totalEloLeaderboard.length > 0) { %>
+                    <% totalEloLeaderboard.forEach(player => { %>
+                        <li><%= player.name %> - <%= player.totalElo %> ELO</li>
+                    <% }); %>
+                <% } else { %>
+                    <li>No players available</li>
+                <% } %>
+            </ul>
         </div>
-        <div class="leaderboard-container">
-            <% maps.forEach(map => { %>
-                <div class="leaderboard-box" id="leaderboard-<%= map._id %>">
-                    <h2><%= map.name %></h2>
-                    <div class="btn-group">
-                        <button class="btn" onclick="loadLeaderboard('<%= map._id %>', 'default')">Default</button>
-                        <button class="btn" onclick="loadLeaderboard('<%= map._id %>', 'verified')">Verified</button>
-                        <button class="btn" onclick="loadLeaderboard('<%= map._id %>', 'unverified')">Unverified</button>
+        <div class="right-column">
+            <h1>Trackmania Leaderboard</h1>
+            <div style="text-align: center;">
+                <a class="btn" href="/games/<%= game._id %>/input">Submit New Score</a>
+                <% if (userRole === 'general admin' || userRole === 'head admin') { %>
+                    <a class="btn" href="/games/<%= game._id %>/verify">Verify Runs</a>
+                <% } %>
+                <a class="btn" href="/">Home</a>
+            </div>
+            <div class="leaderboard-container">
+                <% maps.forEach(map => { %>
+                    <div class="leaderboard-box" id="leaderboard-<%= map._id %>">
+                        <h2><%= map.name %></h2>
+                        <div class="btn-group">
+                            <button class="btn" onclick="toggleLeaderboard('<%= map._id %>')">Default</button>
+                        </div>
+                        <ul></ul>
                     </div>
-                    <ul></ul>
-                </div>
-            <% }) %>
+                <% }) %>
+            </div>
         </div>
     </div>
     <script>
+        const leaderboardStates = ['default', 'verified', 'unverified'];
+        const leaderboardStateNames = {
+            'default': 'Default',
+            'verified': 'Verified',
+            'unverified': 'Unverified'
+        };
+
+        function formatTime(milliseconds) {
+            const minutes = Math.floor(milliseconds / 60000);
+            const seconds = Math.floor((milliseconds % 60000) / 1000);
+            const ms = milliseconds % 1000;
+            return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}.${ms}`;
+        }
+
         async function loadLeaderboard(mapId, type) {
-            const response = await fetch(`/games/trackmania/leaderboard/${mapId}/${type}`);
+            const response = await fetch(`/trackmania/leaderboard/${mapId}/${type}`);
             const data = await response.json();
 
             const leaderboardBox = document.getElementById(`leaderboard-${mapId}`);
@@ -103,21 +131,51 @@
 
             data.forEach(player => {
                 const li = document.createElement('li');
-                const time = new Date(player.time).toISOString().slice(14, 23);
                 li.innerHTML = `
                     ${player.isApproved ? '✔' : '❌'} 
                     ${player.playerName} 
-                    ${time}
+                    ${formatTime(player.time)}
+                    ${type === 'default' ? ` - ${player.points} points` : ''}
                 `;
                 ul.appendChild(li);
             });
         }
 
-        // Load default leaderboards on page load
+        function toggleLeaderboard(mapId) {
+            const button = document.querySelector(`#leaderboard-${mapId} .btn-group .btn`);
+            const currentType = button.getAttribute('data-type');
+            const currentIndex = leaderboardStates.indexOf(currentType);
+            const nextIndex = (currentIndex + 1) % leaderboardStates.length;
+            const nextType = leaderboardStates[nextIndex];
+
+            button.setAttribute('data-type', nextType);
+            button.innerHTML = leaderboardStateNames[nextType];
+
+            loadLeaderboard(mapId, nextType);
+        }
+
+        async function loadTotalEloLeaderboard() {
+            const response = await fetch(`/trackmania/total-elo-leaderboard`);
+            const data = await response.json();
+
+            const ul = document.getElementById('total-elo-leaderboard');
+            ul.innerHTML = '';
+
+            data.forEach(player => {
+                const li = document.createElement('li');
+                li.innerHTML = `${player.name} - ${player.totalElo} ELO`;
+                ul.appendChild(li);
+            });
+        }
+
+        // Initialize buttons and load default leaderboards on page load
         document.addEventListener('DOMContentLoaded', () => {
+            loadTotalEloLeaderboard();
             const mapElements = document.querySelectorAll('.leaderboard-box');
             mapElements.forEach(mapElement => {
                 const mapId = mapElement.id.split('-')[1];
+                const button = mapElement.querySelector('.btn-group .btn');
+                button.setAttribute('data-type', 'default');
                 loadLeaderboard(mapId, 'default');
             });
         });

@@ -14,7 +14,7 @@ const PlayerTrackmania = require('./models/playerTrackmania');
 const app = express();
 const PORT = 3001;
 
-mongoose.connect('mongodb://localhost/eloDB', { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect('mongodb://localhost/eloDB')
     .then(() => {
         console.log('Connected to MongoDB');
     }).catch((error) => {
@@ -47,16 +47,18 @@ const playersRouter = require('./routes/players');
 const authRouter = require('./routes/auth');
 const profileRouter = require('./routes/profile');
 const gamesRouter = require('./routes/games');
-const mapsRouter = require('./routes/maps');  // Corrected import for maps route
+const mapsRouter = require('./routes/maps');
 const verifyRouter = require('./routes/verify');
+const trackmaniaRouter = require('./routes/trackmania');
 
 app.use('/', indexRouter);
 app.use('/players', playersRouter);
 app.use('/auth', authRouter);
 app.use('/profile', profileRouter);
 app.use('/games', gamesRouter);
-app.use('/maps', mapsRouter);  // Corrected usage for maps route
+app.use('/maps', mapsRouter);
 app.use('/verify', verifyRouter);
+app.use('/trackmania', trackmaniaRouter);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);

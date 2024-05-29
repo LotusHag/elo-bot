@@ -31,3 +31,13 @@
 		-- Every user should have certain accounts attached to them.
 6. Add a user section
 7. Add match history to the website.
+
+new green color background: #013220
+Color LoL: Gold
+Color Valorant: Red
+Color Rocket League: Orange
+Color Trackmania: White
+
+
+Implement the new frontend with a seperate standardized header with the logo and and home buttton on the left
+The content of every page should have the new petals integrated with different colors for different games.

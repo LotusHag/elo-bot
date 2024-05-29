@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Trackmania Runs</title>
+    <title>Verify Runs</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,80 +17,104 @@
             margin: auto;
             overflow: hidden;
         }
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background-color: #34495e;
+        }
+        .nav-container a {
+            padding: 10px;
+            background-color: #333;
+            border: 1px solid #555;
+            text-decoration: none;
+            color: white;
+            border-radius: 5px;
+        }
+        .nav-container a:hover {
+            background-color: #555;
+        }
         h1 {
             text-align: center;
-            padding: 20px 0;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
         table, th, td {
-            border: 1px solid #34495e;
+            border: 1px solid #555;
         }
         th, td {
             padding: 10px;
-            text-align: left;
+            text-align: center;
         }
         th {
             background-color: #34495e;
         }
+        td {
+            background-color: #3b5998;
+        }
         .btn {
-            padding: 5px 10px;
-            background-color: #3498db;
-            color: white;
-            text-decoration: none;
+            padding: 10px;
+            border: none;
             border-radius: 5px;
-            text-align: center;
             cursor: pointer;
         }
-        .btn:hover {
-            background-color: #2980b9;
+        .btn-approve {
+            background-color: #4CAF50;
+            color: white;
         }
-        .btn-container {
-            display: flex;
-            justify-content: center;
+        .btn-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .btn-back {
+            display: block;
+            width: 100px;
+            margin: 20px auto;
+            background-color: #3498db;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            text-decoration: none;
         }
     </style>
 </head>
 <body>
+    <div class="nav-container">
+        <a href="/">Home</a>
+        <a href="/trackmania/submit">Submit New Run</a>
+        <a href="/trackmania/verify-runs">Verify Runs</a>
+    </div>
     <div class="container">
-        <h1>Verify Trackmania Runs</h1>
+        <h1>Verify Runs</h1>
         <table>
-            <thead>
+            <tr>
+                <th>Player</th>
+                <th>Map</th>
+                <th>Time</th>
+                <th>Actions</th>
+            </tr>
+            <% runs.forEach(run => { %>
                 <tr>
-                    <th>Player</th>
-                    <th>Map</th>
-                    <th>Time</th>
-                    <th>Action</th>
+                    <td><%= run.player ? run.player.name : 'Unknown Player' %></td>
+                    <td><%= run.map ? run.map.name : 'Unknown Map' %></td>
+                    <td><%= run.time %></td>
+                    <td>
+                        <form action="/trackmania/verify-runs/approve/<%= run._id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-approve">Approve</button>
+                        </form>
+                        <form action="/trackmania/verify-runs/delete/<%= run._id %>" method="POST" style="display:inline;">
+                            <button type="submit" class="btn btn-delete">Delete</button>
+                        </form>
+                    </td>
                 </tr>
-            </thead>
-            <tbody>
-                <% runs.forEach(run => { %>
-                    <tr>
-                        <td><%= run.player.name %></td>
-                        <td><%= run.map.name %></td>
-                        <td><%= new Date(run.time).toISOString().slice(14, 23) %></td>
-                        <td>
-                            <form action="/games/<%= game._id %>/verify" method="POST" style="display: inline;">
-                                <input type="hidden" name="runId" value="<%= run._id %>">
-                                <input type="hidden" name="action" value="approve">
-                                <button type="submit" class="btn">Approve</button>
-                            </form>
-                            <form action="/games/<%= game._id %>/verify" method="POST" style="display: inline;">
-                                <input type="hidden" name="runId" value="<%= run._id %>">
-                                <input type="hidden" name="action" value="delete">
-                                <button type="submit" class="btn">Delete</button>
-                            </form>
-                        </td>
-                    </tr>
-                <% }) %>
-            </tbody>
+            <% }) %>
         </table>
-        <div class="btn-container">
-            <a class="btn" href="/">Home</a>
-        </div>
+        <a href="/" class="btn-back">Back to Home</a>
     </div>
 </body>
 </html>

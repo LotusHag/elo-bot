@@ -12,7 +12,7 @@ mongoose.connect('mongodb://localhost:27017/eloDB', {
 
 const maps = [
     {
-        name: '2021 Summer 24',
+        name: '2020 Summer 04',
         status: 'active'
     }
 ];

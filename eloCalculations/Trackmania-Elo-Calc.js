@@ -1,18 +1,18 @@
+const TrackmaniaMap = require('../models/trackmaniaMap');
 const TrackmaniaRun = require('../models/trackmaniaRun');
 
-const calculateEloChange = (playerElo, actualScore, kFactor) => {
-    // Custom Elo calculation for Trackmania (if needed)
-    const expectedScore = 1 / (1 + Math.pow(10, (playerElo - actualScore) / 400));
-    let eloChange = kFactor * (actualScore - expectedScore);
-    return eloChange;
+const calculateElo = async (mapId) => {
+    const runs = await TrackmaniaRun.find({ mapId }).sort({ time: 1 }).limit(5);
+    const points = [500, 250, 125, 75, 50];
+    let index = 0;
+
+    for (let run of runs) {
+        const player = await PlayerTrackmania.findById(run.playerId);
+        player.elo = player.elo - player.maps[mapId] + points[index];
+        player.maps[mapId] = points[index];
+        await player.save();
+        index++;
+    }
 };
 
-const updatePlayerStats = async (player, newTime, kFactor) => {
-    // Update player stats based on the new time (if needed)
-    const playerElo = player.elo;
-    const eloChange = calculateEloChange(playerElo, newTime, kFactor);
-    player.elo += eloChange;
-    await player.save();
-};
-
-module.exports = { updatePlayerStats };
+module.exports = { calculateElo };

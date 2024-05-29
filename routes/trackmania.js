@@ -1,63 +1,111 @@
 const express = require('express');
 const router = express.Router();
-const TrackmaniaMap = require('../models/trackmaniaMap');
+const mongoose = require('mongoose');
 const TrackmaniaRun = require('../models/trackmaniaRun');
-const Player = require('../models/player');
-const { ensureAuthenticated, ensureAdmin } = require('../config/auth');
+const PlayerTrackmania = require('../models/playerTrackmania');
+const TrackmaniaMap = require('../models/trackmaniaMap');
 
-router.get('/leaderboard', ensureAuthenticated, async (req, res) => {
-    const maps = await TrackmaniaMap.find({ status: 'active' }).exec();
-    const leaderboards = {};
+router.get('/leaderboard/:mapId/:type', async (req, res) => {
+    try {
+        const mapId = req.params.mapId;
+        const type = req.params.type;
 
-    for (const map of maps) {
-        const runs = await TrackmaniaRun.find({ map: map._id, verified: true })
+        let filter = { map: mapId };
+        if (type === 'verified') {
+            filter.verified = true;
+        }
+
+        const runs = await TrackmaniaRun.find(filter)
             .populate('player')
             .sort({ time: 1 })
-            .limit(10)
             .exec();
-        leaderboards[map.name] = runs;
+
+        let leaderboard = [];
+        if (type === 'default') {
+            const playerBestRuns = new Map();
+            for (let run of runs) {
+                if (run.verified && run.player && (!playerBestRuns.has(run.player._id.toString()) || run.time < playerBestRuns.get(run.player._id.toString()).time)) {
+                    playerBestRuns.set(run.player._id.toString(), run);
+                }
+            }
+            leaderboard = Array.from(playerBestRuns.values()).map(run => ({
+                playerName: run.player ? run.player.name : 'Unknown Player',
+                time: run.time,
+                isApproved: run.verified
+            }));
+        } else {
+            leaderboard = runs.map(run => ({
+                playerName: run.player ? run.player.name : 'Unknown Player',
+                time: run.time,
+                isApproved: run.verified
+            }));
+        }
+
+        res.json(leaderboard);
+    } catch (err) {
+        console.error('Error fetching leaderboard:', err);
+        res.status(500).json({ message: 'Internal server error' });
     }
-
-    res.render('game-leaderboard-trackmania', { maps, leaderboards });
 });
 
-router.get('/input', ensureAuthenticated, async (req, res) => {
-    const maps = await TrackmaniaMap.find({ status: 'active' }).exec();
-    res.render('game-input-trackmania', { maps });
-});
+router.get('/total-elo-leaderboard', async (req, res) => {
+    try {
+        const players = await PlayerTrackmania.find();
 
-router.post('/input', ensureAuthenticated, async (req, res) => {
-    const { map, minutes, seconds, milliseconds } = req.body;
-    const time = (parseInt(minutes) * 60 + parseInt(seconds)) * 1000 + parseInt(milliseconds);
-    const player = await Player.findById(req.user._id).exec();
+        const playerEloMap = new Map();
+        for (let player of players) {
+            let totalElo = 0;
+            const runs = await TrackmaniaRun.find({ player: player._id, verified: true });
 
-    const newRun = new TrackmaniaRun({
-        player: player._id,
-        map,
-        time,
-        verified: false
-    });
+            for (let run of runs) {
+                totalElo += 1000; // Assuming 1000 points per run as a placeholder
+            }
 
-    await newRun.save();
-    res.redirect('/trackmania/leaderboard');
-});
+            playerEloMap.set(player._id.toString(), {
+                name: player.name,
+                totalElo: totalElo
+            });
+        }
 
-router.get('/verify', ensureAdmin, async (req, res) => {
-    const unverifiedRuns = await TrackmaniaRun.find({ verified: false }).populate('player map').exec();
-    res.render('verify-trackmania', { unverifiedRuns });
-});
+        const totalEloLeaderboard = Array.from(playerEloMap.values()).sort((a, b) => b.totalElo - a.totalElo);
 
-router.post('/verify/:runId', ensureAdmin, async (req, res) => {
-    const runId = req.params.runId;
-    const action = req.body.action;
-
-    if (action === 'approve') {
-        await TrackmaniaRun.findByIdAndUpdate(runId, { verified: true }).exec();
-    } else if (action === 'delete') {
-        await TrackmaniaRun.findByIdAndDelete(runId).exec();
+        res.json(totalEloLeaderboard);
+    } catch (err) {
+        console.error('Error fetching total ELO leaderboard:', err);
+        res.status(500).json({ message: 'Internal server error' });
     }
+});
 
-    res.redirect('/trackmania/verify');
+router.get('/verify-runs', async (req, res) => {
+    try {
+        const runs = await TrackmaniaRun.find({ verified: false }).populate('player').populate('map').exec();
+        res.render('verify-runs', { runs });
+    } catch (err) {
+        console.error('Error fetching runs for verification:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.post('/verify-runs/approve/:id', async (req, res) => {
+    try {
+        const runId = req.params.id;
+        await TrackmaniaRun.findByIdAndUpdate(runId, { verified: true });
+        res.redirect('/trackmania/verify-runs');
+    } catch (err) {
+        console.error('Error approving run:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
+router.post('/verify-runs/delete/:id', async (req, res) => {
+    try {
+        const runId = req.params.id;
+        await TrackmaniaRun.findByIdAndDelete(runId);
+        res.redirect('/trackmania/verify-runs');
+    } catch (err) {
+        console.error('Error deleting run:', err);
+        res.status(500).json({ message: 'Internal server error' });
+    }
 });
 
 module.exports = router;
